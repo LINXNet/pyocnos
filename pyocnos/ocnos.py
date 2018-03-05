@@ -2,13 +2,19 @@
 Class to communicate with devices running OcNOS operating system
 """
 import logging
+import lxml
 from future.utils import raise_from
 from ncclient import NCClientError
 from ncclient import manager
 
-from pyocnos.exceptions import OCNOSUnOpenedConnectionException
 from pyocnos.exceptions import OCNOSConnectionException
+from pyocnos.exceptions import OCNOSNoCandidateConfigException
+from pyocnos.exceptions import OCNOSLoadCandidateConfigFileReadException
+from pyocnos.exceptions import OCNOSCandidateConfigNotLoadedException
+from pyocnos.exceptions import \
+    OCNOSCandidateConfigNotInServerCapabilitiesException
 from pyocnos.exceptions import OCNOSUnableToRetrieveConfigException
+from pyocnos.exceptions import OCNOSUnOpenedConnectionException
 
 
 class OCNOS(object):
@@ -31,8 +37,31 @@ class OCNOS(object):
         self.timeout = timeout
 
         self._connection = None
-        self._running_config = None
+        self._candidate_config = None
         self.log = logging.getLogger(__name__)
+
+    def __enter__(self):
+        """
+        Context manager enter open connection
+        Returns: OCNOS
+
+        """
+        self.open()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+
+        """
+        Context manager enter exit connection
+        Args:
+            exc_type:
+            exc_val:
+            exc_tb:
+
+        Returns: None
+
+        """
+        self.close()
 
     def open(self):
         """
@@ -121,3 +150,63 @@ class OCNOS(object):
         else:
             self.log.error('Error', exc_info=True)
             raise OCNOSUnOpenedConnectionException()
+
+    def load_candidate_config(self, filename=None, config=None):
+        """
+        Load candidate_config from a string or file like object
+        Args:
+            filename: Path to the file containing the desired
+                          configuration. Default: None.
+            config: String containing the desired configuration.
+                          Default: None.
+
+        Returns: None
+        Raises: OCNOSLoadCandidateConfigException,
+         OCNOSLoadCandidateConfigFileReadException
+
+        """
+        if filename is None and config is None:
+            raise OCNOSNoCandidateConfigException
+        elif filename:
+            try:
+                self._candidate_config = lxml.etree.parse(filename)
+            except IOError as io_error:
+                raise_from(OCNOSLoadCandidateConfigFileReadException, io_error)
+        else:
+            self._candidate_config = lxml.etree.fromstring(config)
+        self.log.info("candidate_config loaded")
+
+    def commit_config(self):
+        """
+        Commit the loaded candidate config
+        Returns: None
+        Raises: OCNOSUnOpenedConnectionException
+            OCNOSCandidateConfigNotLoadedException
+            OCNOSCandidateConfigNotInServerCapabilitiesException
+        """
+        if self._candidate_config is None:
+            self.log.error('Error: Candidate config not loaded')
+            raise OCNOSCandidateConfigNotLoadedException
+
+        if not self._connection:
+            self.log.error('Error: no open connection', exc_info=True)
+            raise OCNOSUnOpenedConnectionException()
+
+        if ':candidate' not in self._connection.server_capabilities:
+            raise OCNOSCandidateConfigNotInServerCapabilitiesException
+
+        # discard old candidate config
+        # lock the current candidate config
+        # edit it
+        # commit will replace the running one with candidate
+
+        self._connection.discard_changes()
+        with self._connection.locked(target='candidate'):
+            self._connection.edit_config(
+                target='candidate',
+                config=self._candidate_config,
+                test_option='test-then-set',
+                default_operation='replace'
+            )
+            self._connection.commit()
+        self._connection.copy_config(source='running', target='startup')

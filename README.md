@@ -25,6 +25,38 @@ pip install --upgrade pyocnos
 >>> from pyocnos import OcNOS
 >>> device = OcNOS(hostname='192.168.1.222', username='admin', password='admin', timeout=10)
 >>> device.open()
+>>> device.close()
+```
+
+### Reading config
+```python
+>>> from pyocnos import OcNOS
+>>> device = OcNOS(hostname='192.168.1.222', username='admin', password='admin', timeout=10)
+>>> device.open()
+>>> running_config = device.get_running_config()
+>>> device.close()
+```
+
+### Load Candidate config
+```python
+>>> from pyocnos import OcNOS
+>>> device = OcNOS(hostname='192.168.1.222', username='admin', password='admin', timeout=10)
+>>> device.open()
+>>> # from a string
+>>> device.load_candidate_config(config='test config')
+>>> # Or could also be loaded from a file path
+>>> device.load_candidate_config(filename='path-to-file.xml')
+>>> device.close()
+```
+### Commit Candidate config
+```python
+>>> from pyocnos import OcNOS
+>>> device = OcNOS(hostname='192.168.1.222', username='admin', password='admin', timeout=10)
+>>> device.open()
+>>> device.load_candidate_config(config='test config')
+>>> # device running config will be replace by the candidate config
+>>> device.commit_config() 
+>>> device.close()
 ```
 
 ### Logging
