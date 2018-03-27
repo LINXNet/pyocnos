@@ -15,6 +15,7 @@ from pyocnos.exceptions import \
     OCNOSCandidateConfigNotInServerCapabilitiesException
 from pyocnos.exceptions import OCNOSUnableToRetrieveConfigException
 from pyocnos.exceptions import OCNOSUnOpenedConnectionException
+from pyocnos.diff.xml_diff import XmlDiff
 
 
 class OCNOS(object):
@@ -140,13 +141,17 @@ class OCNOS(object):
         """
         if self._connection:
             try:
-                return self._connection.get_config(source='running').data_xml
+                config = self._connection.get_config(source='running').data_xml
             except NCClientError as ncclient_exception:
                 self.log.error('Error', exc_info=True)
                 raise_from(
                     OCNOSUnableToRetrieveConfigException(),
                     ncclient_exception
                 )
+            else:
+                running_config = lxml.etree.fromstring(config.encode())
+                running_config.tag = 'config'
+                return lxml.etree.tostring(running_config, encoding='UTF-8', pretty_print=True)
         else:
             self.log.error('Error', exc_info=True)
             raise OCNOSUnOpenedConnectionException()
@@ -169,12 +174,13 @@ class OCNOS(object):
             raise OCNOSNoCandidateConfigException
         elif filename:
             try:
-                self._candidate_config = lxml.etree.parse(filename)
+                self._candidate_config = lxml.etree.parse(filename).getroot()
             except IOError as io_error:
                 raise_from(OCNOSLoadCandidateConfigFileReadException, io_error)
         else:
             self._candidate_config = lxml.etree.fromstring(config)
-        self.log.info("candidate_config loaded")
+        self._candidate_config.tag = 'config'
+        self.log.info('candidate_config loaded')
 
     def commit_config(self):
         """
@@ -210,3 +216,20 @@ class OCNOS(object):
             )
             self._connection.commit()
         self._connection.copy_config(source='running', target='startup')
+
+    def compare_config(self):
+        """
+        Diff on the running and candidate config
+        Returns: List
+
+        """
+        if self._candidate_config is None:
+            self.log.error('Error: Candidate config not loaded')
+            raise OCNOSCandidateConfigNotLoadedException
+
+        if not self._connection:
+            self.log.error('Error: no open connection', exc_info=True)
+            raise OCNOSUnOpenedConnectionException()
+
+        xml_diff = XmlDiff(self.get_running_config(), lxml.etree.tostring(self._candidate_config))
+        return xml_diff.get_printable_diff()

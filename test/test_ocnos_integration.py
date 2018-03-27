@@ -1,3 +1,4 @@
+from unittest import skip
 import lxml
 from six.moves import configparser
 import logging
@@ -10,6 +11,7 @@ from pyocnos.ocnos import OCNOS
 current_path = os.path.dirname(os.path.realpath(__file__))
 
 
+@skip('Devices are being used for other tests')
 class TestOCNOSIntegration(unittest.TestCase):
 
     @classmethod
@@ -27,8 +29,7 @@ class TestOCNOSIntegration(unittest.TestCase):
 
         candidate_config = lxml.etree.parse(self.basic_config_path).getroot()
         candidate_config.tag = 'config'
-        candidate_config = lxml.etree.tostring(candidate_config,
-                                               encoding='UTF-8')
+        candidate_config = lxml.etree.tostring(candidate_config, encoding='UTF-8')
 
         with OCNOS(self.hostname, self.username, self.password) as device:
             device.load_candidate_config(config=candidate_config)
