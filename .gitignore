@@ -94,5 +94,5 @@ ENV/
 .idea/*
 test/user-details.ini
 test_report_*.xml
-*/user-details.ini
+*/user-details.yml
 test/configs/*.xml

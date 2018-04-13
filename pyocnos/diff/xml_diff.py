@@ -3,6 +3,8 @@ Class for diffing xmls
 """
 from __future__ import print_function
 from copy import deepcopy
+
+import os
 from lxml import etree
 
 from pyocnos.diff import get_element_path
@@ -38,14 +40,13 @@ class XmlDiff(object):
             result.extend(block.get_printable_diff())
         return result
 
-    def print_diff(self):
+    def get_diff_string(self):
         """
-        Actually print the diff
-        Returns: None
+        Return diff as a string
+        Returns: String
 
         """
-        for line in self.get_printable_diff():
-            print(line)
+        return '{}'.format(os.linesep).join(self.get_printable_diff())
 
     def _get_elements_blocks(self):
         """

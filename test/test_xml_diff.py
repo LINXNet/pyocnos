@@ -1,8 +1,8 @@
 import os
-from io import open
 from unittest import TestCase
 
 from lxml.etree import XMLSyntaxError
+
 from pyocnos.diff.xml_diff import XmlDiff
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -239,3 +239,25 @@ class TestXmlDiff(TestCase):
         ]
 
         self.assertListEqual(expected, actual)
+
+    def test_get_diff_string(self):
+        running_config_str = """
+            <data>
+                <vr xmlns="http://www.company.com/TOOSchema/BarOS">
+                    <vrId>0</vrId>
+                </vr>
+            </data>
+        """
+        candidate_config_str = """
+            <data>
+                <vr xmlns="http://www.company.com/TOOSchema/BarOS">
+                    <vrId>2</vrId>
+                </vr>
+            </data>
+        """
+
+        xml_diff = XmlDiff(running_config_str, candidate_config_str)
+        diff = xml_diff.get_diff_string()
+
+        expected = '[vr]{0}- <vrId>0</vrId>{0}+ <vrId>2</vrId>'.format(os.linesep)
+        self.assertEqual(expected, diff)

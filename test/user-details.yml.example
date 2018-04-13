@@ -1,0 +1,5 @@
+config:
+  username: username
+  password: password
+  hostname: test.com
+  timeout: 30

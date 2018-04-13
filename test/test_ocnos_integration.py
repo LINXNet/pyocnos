@@ -1,10 +1,11 @@
-from unittest import skip
-import lxml
-from six.moves import configparser
 import logging
-import sys
 import os
+import sys
 import unittest
+from unittest import skip
+
+import lxml
+import yaml
 
 from pyocnos.ocnos import OCNOS
 
@@ -19,13 +20,13 @@ class TestOCNOSIntegration(unittest.TestCase):
         logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
     def setUp(self):
-        config = configparser.ConfigParser()
-        config.read(os.path.join(current_path, 'user-details.ini'))
-        self.hostname = config.get('DEFAULT', 'hostname')
-        self.username = config.get('DEFAULT', 'username')
-        self.password = config.get('DEFAULT', 'password')
-        self.basic_config_path = os.path.join(current_path, 'configs',
-                                              'basic.xml')
+        with open(os.path.join(current_path, 'user-details.ini'), 'r') as yml_file:
+            config = yaml.load(yml_file)
+
+        self.hostname = config['config']['hostname']
+        self.username = config['config']['username']
+        self.password = config['config']['password']
+        self.basic_config_path = os.path.join(current_path, 'configs', 'basic.xml')
 
         candidate_config = lxml.etree.parse(self.basic_config_path).getroot()
         candidate_config.tag = 'config'
@@ -41,7 +42,7 @@ class TestOCNOSIntegration(unittest.TestCase):
 
     def test_get_running_config(self):
         with OCNOS(self.hostname, self.username, self.password) as device:
-            running_config = device.get_running_config().encode('utf-8')
+            running_config = device.get_config('running')['running'].encode('utf-8')
 
         self.assertEqual(
             self._clean_xml(self.basic_config_path),
@@ -62,7 +63,7 @@ class TestOCNOSIntegration(unittest.TestCase):
                 config=lxml.etree.tostring(candidate_config)
             )
             device.commit_config()
-            running_config = device.get_running_config().encode('utf-8')
+            running_config = device.get_config('running')['running'].encode('utf-8')
         self.assertEqual(
             self._clean_xml(edited_config_path),
             running_config.rstrip()
