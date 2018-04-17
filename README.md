@@ -46,7 +46,7 @@ pip install --upgrade pyocnos
 >>> from pyocnos.ocnos import OCNOS
 >>> # initialze device and open connection
 >>> with OCNOS(hostname='hostname', username='username', password='password') as device:
->>>     running_config = device.get_running_config()
+>>>     running_config = device.get_config('running')['running']
 >>>     print(running_config)
 ```
 

@@ -4,83 +4,128 @@ Command to expose pyocnos functionality
 from __future__ import print_function
 import argparse
 import io
-from lxml import etree
-from six.moves import configparser
+import textwrap
+
+import yaml
 
 from pyocnos.ocnos import OCNOS
 
 
-def main():
+def process(config_file_path, hostname, actions, save_config_file_path, candidate_file_path):
     """
-    Command
-    Returns: None
+    Initialize device and call the actions passed in
+    Args:
+        config_file_path: (String) Path to the yaml file
+         with username password and timeout
+        hostname: (String) hostname of the device
+        actions: (List) of strings e.g ['apply', 'diff']
+        save_config_file_path: (String) Where to store the running or startup config xml from device
+        candidate_file_path: (String) Path to the candidate file
+
+    Returns: (List) of Strings showing user what actions were taken
 
     """
-    parser = argparse.ArgumentParser(description='Diff and apply configs.')
+    with open(config_file_path, 'r') as yml_file:
+        config = yaml.load(yml_file)
+
+    username = config['config']['username']
+    password = config['config']['password']
+    timeout = config['config']['timeout']
+
+    with OCNOS(hostname=hostname, username=username, password=password, timeout=timeout) as device:
+        output = []
+        for action in actions:
+            if action == 'connection':
+                output.append('Device connected: {}'.format(device.is_alive()))
+
+            elif action in ['running', 'startup']:
+                save_config_file_path = save_config_file_path or '{}-{}.xml'.format(hostname, action)
+                with io.open(save_config_file_path, 'wb') as xml_file:
+                    xml_file.write(device.get_config(action)[action])
+                output.append('Devices {} config xml stored in {}'.format(action.capitalize(), save_config_file_path))
+
+            else:
+                device.load_candidate_config(filename=candidate_file_path)
+                if action == 'diff':
+                    output.append(device.compare_config())
+                else:
+                    device.commit_config()
+                    output.append('Config applied to device')
+        return output
+
+
+def parse_and_get_args():
+    """
+    Create arg parser.
+    Returns: argparse.ArgumentParser
+
+    """
+    parser = argparse.ArgumentParser(
+        description='Diff and apply configs.',
+        formatter_class=argparse.RawTextHelpFormatter
+    )
 
     parser.add_argument(
-        'config',
-        nargs='?',
-        default='config.ini',
-        help='Config file with switch and user details',
-    )
-    parser.add_argument(
-        'candidate',
-        nargs='?',
-        default='candidate.xml',
-        help='Candidate xml file',
+        'config_file_path',
+        help='Config file with user details like username and password'
     )
 
     parser.add_argument(
-        '-d',
-        '--diff',
-        help='Show diff with the running config',
-        action='store_true',
-        dest='diff'
+        'hostname',
+        help='Hostname of the switch'
     )
 
     parser.add_argument(
-        '-a',
-        '--apply',
-        help='Replace Running config with Candidate condig',
-        action='store_true',
-        dest='apply'
+        'actions',
+        nargs='+',
+        choices=['diff', 'apply', 'running', 'connection', 'startup'],
+        help=textwrap.dedent("""
+        Please choose one or multiple actions from below
+        'diff' Compare Running config with Candidate config.
+        'apply' Replace Running config with Candidate config.
+        'running' Get running config from switch and save it to a file.
+        'connection' Make a connection to device.
+        'startup' Get startup config from switch and save it to a file.
+        """)
     )
 
     parser.add_argument(
-        '-r',
-        '--running',
-        help='Get running config from switch and save it in local dir called running.xml',
-        action='store_true',
-        dest='running'
+        '-s',
+        '--save-config-file-path',
+        dest='save_config_file_path',
+        help=textwrap.dedent("""
+        File path to save running or startup configs in.
+        If no path is given than file will be saved in current dir
+        with hostname-action.xml. For example for running config with
+        hostname foo.bar foo.bar-running.xml will be created.
+        """)
+    )
+    parser.add_argument(
+        '-c',
+        '--candidate-file-path',
+        dest='candidate_file_path',
+        help='Candidate file path',
     )
 
     args = parser.parse_args()
+    if ('diff' in args.actions or 'apply' in args.actions) and not args.candidate_file_path:
+        parser.error("diff and apply actions requires -c, --candidate-file-path.")
+    return args
 
-    if not (args.diff or args.apply or args.running):
-        parser.error('No action requested, add --diff or --apply or --running')
 
-    config = configparser.ConfigParser()
-    config.read(args.config)
-    hostname = config.get('DEFAULT', 'hostname')
-    username = config.get('DEFAULT', 'username')
-    password = config.get('DEFAULT', 'password')
+def main():
+    """
+    Main function called from command line
+    Returns: None
 
-    with OCNOS(hostname, username, password) as device:
-        if args.running:
-            with io.open('running.xml', 'wb') as running_file:
-                running_file.write(device.get_running_config())
-
-        if args.diff:
-            candidate_config = etree.parse(args.candidate).getroot()
-            candidate_config.tag = 'config'
-            candidate_config = etree.tostring(candidate_config, encoding='UTF-8')
-
-            device.load_candidate_config(config=candidate_config)
-            diff = device.compare_config()
-            for line in diff:
-                print(line)
-
-        if args.apply:
-            device.load_candidate_config(filename=args.candidate)
-            device.commit_config()
+    """
+    args = parse_and_get_args()
+    output = process(
+        config_file_path=args.config_file_path,
+        hostname=args.hostname,
+        actions=args.actions,
+        save_config_file_path=args.save_config_file_path,
+        candidate_file_path=args.candidate_file_path
+    )
+    for line in output:
+        print(line)

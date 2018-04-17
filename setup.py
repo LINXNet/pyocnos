@@ -3,22 +3,17 @@
  switches running OcNOS operating system. """
 
 from setuptools import setup, find_packages
-from pip.req import parse_requirements
-import uuid
 
-install_requirements = parse_requirements(
-    'requirements.txt', session=uuid.uuid1()
-)
+with open('requirements.txt', 'r') as requirements:
+    install_requires = [line.strip() for line in requirements if line and not line.startswith('#')]
 
-requirements = [str(ir.req) for ir in install_requirements]
-version = '0.2.0'
-
+version = '0.2.1'
 setup(
     name='pyocnos',
     version=version,
     py_modules=['pyocnos'],
     packages=find_packages(),
-    install_requires=requirements,
+    install_requires=install_requires,
     include_package_data=True,
     description='Python API to interact with network devices running OcNOS',
     author='LINX',
