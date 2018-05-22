@@ -1,9 +1,11 @@
 from __future__ import unicode_literals
+
 import hashlib
 from collections import OrderedDict
 from unittest import TestCase
 
 from lxml import etree
+
 from pyocnos.diff.block import Block
 
 
@@ -289,10 +291,11 @@ class TestBlock(TestCase):
         actual_as_string = etree.tostring(actual).decode('utf-8')
         self.assertTrue('<same><vrId>0</vrId></same>' in actual_as_string)
         self.assertTrue('<same><vrId>1</vrId></same>' in actual_as_string)
-        self.assertTrue('<moved><vrf><vrfName>FOO_THREE</vrfName><macVrf>true</macVrf></vrf></moved>' in actual_as_string)
+        self.assertTrue(
+            '<moved><vrf><vrfName>FOO_THREE</vrfName><macVrf>true</macVrf></vrf></moved>' in actual_as_string
+        )
         self.assertTrue('<moved><vrf><vrfName>FOO_TWO</vrfName><macVrf>true</macVrf></vrf></moved>' in actual_as_string)
         self.assertTrue('<removed><vrId>2</vrId></removed>' in actual_as_string)
-
 
     def test_get_printable_diff_for_moved_tags(self):
         running = etree.fromstring('<vr><vrId>1</vrId><vrId>2</vrId></vr>')
@@ -341,11 +344,6 @@ class TestBlock(TestCase):
         block = Block(running, candidate)
 
         actual = block.get_printable_diff()
-        expected = [
-            '[vr]',
-            '- <vrId>2</vrId>',
-            '- <foo>1</foo>'
-        ]
 
         self.assertTrue('[vr]' in actual)
         self.assertTrue('- <vrId>2</vrId>' in actual)
@@ -667,6 +665,18 @@ class TestBlock(TestCase):
         self.assertTrue('<same><name>2</name></same>' in actual_as_string, actual_as_string)
         self.assertTrue('<added><foo>text</foo></added>' in actual_as_string, actual_as_string)
 
+    def test_get_diff_on_children_when_running_has_extract_elements(self):
+        actual = Block._get_diff_on_children(
+            etree.fromstring('<vrfT><dns><ser>1233</ser><ser>1244</ser><ser>1245</ser></dns></vrfT>'),
+            etree.fromstring('<vrfT><dns><ser>2</ser></dns></vrfT>'),
+
+        )
+        self.assertEqual(actual.tag, 'vrfT')
+        actual_as_string = etree.tostring(actual).decode('utf-8')
+        self.assertTrue('<removed><ser>1244</ser></removed>' in actual_as_string, actual_as_string)
+        self.assertTrue('<removed><ser>1233</ser></removed>' in actual_as_string, actual_as_string)
+        self.assertTrue('<added><ser>2</ser></added>' in actual_as_string, actual_as_string)
+
     def test_get_elements_for_diff(self):
         vr_element = etree.Element('vr')
         first_interface_str = """
@@ -736,6 +746,225 @@ class TestBlock(TestCase):
             '+ </vrf>'
         ]
         self.assertEqual(expected, actual)
+
+    def test_get_printable_with_whole_tag_missing(self):
+        self.maxDiff = None
+        running_str = """
+           <vr>
+               <interface>
+                   <switchportAllowedEthertypes>
+                       <ipv6>true</ipv6>
+                       <ipv4>true</ipv4>
+                   </switchportAllowedEthertypes>
+               </interface>
+               <bgp>
+                   <name>has</name>
+               </bgp>
+           </vr>
+           """
+        candidate_str = """
+           <vr>
+               <interface>
+                   <switchportAllowedEthertypes>
+                       <ipv6>true</ipv6>
+                       <ipv4>true</ipv4>
+                       <arp>true</arp>
+                   </switchportAllowedEthertypes>
+               </interface>
+           </vr>
+           """
+        running = etree.fromstring(running_str)
+        candidate = etree.fromstring(candidate_str)
+        block = Block(running, candidate)
+
+        actual = block.get_printable_diff()
+        self.assertTrue('[vr]' in actual)
+        self.assertTrue('  <interface>' in actual)
+        self.assertTrue('    <switchportAllowedEthertypes>' in actual)
+        self.assertTrue('      <ipv6>true</ipv6>' in actual)
+        self.assertTrue('      <ipv4>true</ipv4>' in actual)
+        self.assertTrue('+     <arp>true</arp>' in actual)
+        self.assertTrue('    </switchportAllowedEthertypes>' in actual)
+        self.assertTrue('  </interface>' in actual)
+        self.assertTrue('- <bgp>' in actual)
+        self.assertTrue('-   <name>has</name>' in actual)
+        self.assertTrue('- </bgp>' in actual)
+
+    def test_when_whole_block_new_in_candidate(self):
+        self.maxDiff = None
+        running_str = """
+           <vr>
+                <bgp>
+                    <bgpAs>65432</bgpAs>
+                    <setLogNbrChanges>true</setLogNbrChanges>
+                    <bgpAddressFamily>
+                        <afi>l2vpn</afi>
+                        <bgpSubAddressFamily>
+                            <safi>evpn</safi>
+                            <vrfAf>
+                                <vrfName>default</vrfName>
+                            </vrfAf>
+                        </bgpSubAddressFamily>
+                    </bgpAddressFamily>
+                    <bgpPeer>
+                        <peerAddr>10.0.2.129</peerAddr>
+                        <peerActivate>true</peerActivate>
+                        <sourceId>lo</sourceId>
+                        <peerDesc>edge1-ec3-lon2</peerDesc>
+                        <peerAs>65432</peerAs>
+                        <bgpPeerAddressFamily>
+                            <afi>l2vpn</afi>
+                            <bgpPeerSubAddressFamily>
+                                <safi>evpn</safi>
+                                <peerActivateAf>true</peerActivateAf>
+                            </bgpPeerSubAddressFamily>
+                        </bgpPeerAddressFamily>
+                    </bgpPeer>
+                </bgp>
+            </vr>
+           """
+        candidate_str = """
+           <vr>
+                <bgp>
+                    <bgpAs>65432</bgpAs>
+                    <setLogNbrChanges>true</setLogNbrChanges>
+                    <bgpAddressFamily>
+                        <afi>l2vpn</afi>
+                        <bgpSubAddressFamily>
+                            <safi>evpn</safi>
+                            <vrfAf>
+                                <vrfName>default</vrfName>
+                            </vrfAf>
+                        </bgpSubAddressFamily>
+                    </bgpAddressFamily>
+                    <bgpPeer>
+                        <peerAddr>10.0.2.129</peerAddr>
+                        <peerActivate>true</peerActivate>
+                        <sourceId>lo</sourceId>
+                        <peerDesc>edge1-ec3-lon2</peerDesc>
+                        <peerAs>65432</peerAs>
+                        <bgpPeerAddressFamily>
+                            <afi>l2vpn</afi>
+                            <bgpPeerSubAddressFamily>
+                                <safi>evpn</safi>
+                                <peerActivateAf>true</peerActivateAf>
+                            </bgpPeerSubAddressFamily>
+                        </bgpPeerAddressFamily>
+                    </bgpPeer>
+                    <bgpPeer>
+                        <peerAddr>10.0.2.129</peerAddr>
+                        <peerActivate>true</peerActivate>
+                        <sourceId>lo</sourceId>
+                        <peerDesc>edge2-ec3-lon2</peerDesc>
+                        <peerAs>65432</peerAs>
+                        <bgpPeerAddressFamily>
+                            <afi>l2vpn</afi>
+                            <bgpPeerSubAddressFamily>
+                                <safi>evpn</safi>
+                                <peerActivateAf>true</peerActivateAf>
+                            </bgpPeerSubAddressFamily>
+                        </bgpPeerAddressFamily>
+                    </bgpPeer>
+                </bgp>
+            </vr>
+           """
+        running = etree.fromstring(running_str)
+        candidate = etree.fromstring(candidate_str)
+        block = Block(running, candidate)
+        actual = block.get_printable_diff()
+
+        self.assertTrue('[vr]' in actual)
+        self.assertTrue('  <bgp>' in actual)
+        self.assertTrue('    <bgpAddressFamily>...</bgpAddressFamily>' in actual)
+        self.assertTrue('    <bgpPeer>...</bgpPeer>' in actual)
+        self.assertTrue('    <bgpAs>65432</bgpAs>' in actual)
+        self.assertTrue('    <setLogNbrChanges>true</setLogNbrChanges>' in actual)
+        self.assertTrue('+ <bgpPeer>' in actual)
+        self.assertTrue('+   <peerAddr>10.0.2.129</peerAddr>' in actual)
+        self.assertTrue('+   <peerActivate>true</peerActivate>' in actual)
+        self.assertTrue('+   <sourceId>lo</sourceId>' in actual)
+        self.assertTrue('+   <peerDesc>edge2-ec3-lon2</peerDesc>' in actual)
+        self.assertTrue('+   <peerAs>65432</peerAs>' in actual)
+        self.assertTrue('+   <bgpPeerAddressFamily>' in actual)
+        self.assertTrue('+     <afi>l2vpn</afi>' in actual)
+        self.assertTrue('+     <bgpPeerSubAddressFamily>' in actual)
+        self.assertTrue('+       <safi>evpn</safi>' in actual)
+        self.assertTrue('+       <peerActivateAf>true</peerActivateAf>' in actual)
+        self.assertTrue('+     </bgpPeerSubAddressFamily>' in actual)
+        self.assertTrue('+ </bgpPeer>' in actual)
+        self.assertTrue('  </bgp>' in actual)
+
+    def test_when_root_elements_change(self):
+        self.maxDiff = None
+        running_str = """
+           <logginglevel>
+                <name>foo</name>
+                <logginglevel>5</logginglevel>
+                <bar>1</bar>
+           </logginglevel>
+           """
+        candidate_str = """
+            <logginglevel>
+                <name>foo</name>
+                <logginglevel>2</logginglevel>
+                <bar>1</bar>
+            </logginglevel>
+           """
+        running = etree.fromstring(running_str)
+        candidate = etree.fromstring(candidate_str)
+        block = Block(running, candidate)
+        actual = block.get_printable_diff()
+        expected = [
+            '[logginglevel]',
+            '  <name>foo</name>',
+            '  <bar>1</bar>',
+            '- <logginglevel>5</logginglevel>',
+            '+ <logginglevel>2</logginglevel>'
+        ]
+        self.assertEqual(expected, actual)
+
+    def test_get_printable_with_whole_tag_missing(self):
+        self.maxDiff = None
+        running_str = """
+           <vr>
+               <interface>
+                   <switchportAllowedEthertypes>
+                       <ipv6>true</ipv6>
+                       <ipv4>true</ipv4>
+                   </switchportAllowedEthertypes>
+               </interface>
+               <bgp>
+                   <name>has</name>
+               </bgp>
+           </vr>
+           """
+        candidate_str = """
+           <vr>
+               <interface>
+                   <switchportAllowedEthertypes>
+                       <ipv6>true</ipv6>
+                       <ipv4>true</ipv4>
+                       <arp>true</arp>
+                   </switchportAllowedEthertypes>
+               </interface>
+           </vr>
+           """
+        running = etree.fromstring(running_str)
+        candidate = etree.fromstring(candidate_str)
+        block = Block(running, candidate)
+
+        actual = block.get_printable_diff()
+        self.assertTrue('[vr]' in actual)
+        self.assertTrue('  <interface>' in actual)
+        self.assertTrue('    <switchportAllowedEthertypes>' in actual)
+        self.assertTrue('      <ipv6>true</ipv6>' in actual)
+        self.assertTrue('      <ipv4>true</ipv4>' in actual)
+        self.assertTrue('+     <arp>true</arp>' in actual)
+        self.assertTrue('    </switchportAllowedEthertypes>' in actual)
+        self.assertTrue('  </interface>' in actual)
+        self.assertTrue('- <bgp>' in actual)
+        self.assertTrue('-   <name>has</name>' in actual)
+        self.assertTrue('- </bgp>' in actual)
 
     @staticmethod
     def _get_element(tag, child_tag, child_text):
