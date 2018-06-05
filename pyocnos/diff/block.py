@@ -83,11 +83,10 @@ class Block(object):
         else:
             if len(diff_xml) != len(diff_xml.xpath('./same')):
                 for element in diff_xml:
-                    if element.tag == SAME and len(element) == 1 and len(
-                            diff_xml.xpath('.//{}'.format(element[0].tag))) == 1:
-                        self._append_element_as_string(element, result, print_same=True)
-                    else:
-                        self._append_element_as_string(element, result)
+                    print_same = (element.tag == SAME and len(element) == 1 and
+                                  len(diff_xml.xpath('.//{}'.format(element[0].tag))) == 1)
+
+                    self._append_element_as_string(element, result, print_same=print_same)
         return result if len(result) > 1 else []
 
     def _append_element_as_string(self, element, result, spaces=0, print_same=False):
