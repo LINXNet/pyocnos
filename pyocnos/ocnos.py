@@ -2,6 +2,7 @@
 Class to communicate with devices running OcNOS operating system
 """
 import logging
+# todo: Remove this once Ipinfusion have fix issue on as5812 switches for timeout
 from time import sleep
 
 import lxml

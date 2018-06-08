@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import hashlib
 from collections import OrderedDict
 from unittest import TestCase
-
 from lxml import etree
 
 from pyocnos.diff.block import Block

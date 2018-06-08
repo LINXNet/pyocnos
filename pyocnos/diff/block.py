@@ -150,20 +150,20 @@ class Block(object):
         hashes_seen = []
         self.final_diff = etree.Element(self.get_name())
         for ele_name, running_elements in self.elements_for_diff_on_running.items():
-            for index, (running_ele_hash, running_element) in enumerate(running_elements.items()):
+            for index, (running_elem_hash, running_element) in enumerate(running_elements.items()):
                 try:
                     candidate_elements = self.elements_for_diff_on_candidate[ele_name]
                 except KeyError:
                     running_elements_to_diff[ele_name].append(running_element)
                 else:
                     candidate_hash_list = list(candidate_elements.keys())
-                    if running_ele_hash in candidate_elements:
-                        hashes_seen.append(running_ele_hash)
+                    if running_elem_hash in candidate_elements:
+                        hashes_seen.append(running_elem_hash)
                         try:
-                            candidate_ele_hash = candidate_hash_list[index]
+                            candidate_elem_hash = candidate_hash_list[index]
                         except IndexError:
-                            candidate_ele_hash = None
-                        if running_ele_hash == candidate_ele_hash:
+                            candidate_elem_hash = None
+                        if running_elem_hash == candidate_elem_hash:
                             etree.SubElement(self.final_diff, SAME).append(deepcopy(running_element))
                         else:
                             etree.SubElement(self.final_diff, MOVED).append(deepcopy(running_element))
