@@ -2,6 +2,9 @@
 Class to communicate with devices running OcNOS operating system
 """
 import logging
+# todo: Remove this once Ipinfusion have fix issue on as5812 switches for timeout
+from time import sleep
+
 import lxml
 from future.utils import raise_from
 from ncclient import NCClientError
@@ -81,6 +84,8 @@ class OCNOS(object):
                 timeout=self.timeout,
                 look_for_keys=False
             )
+            # todo: Remove this once Ipinfusion have fix issue on as5812 switches for timeout
+            sleep(2)
         except NCClientError as ncclient_exception:
             self.log.error('Error', exc_info=True)
             raise_from(

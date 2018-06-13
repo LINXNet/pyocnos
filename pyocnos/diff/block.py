@@ -81,10 +81,12 @@ class Block(object):
                 [self._format_element_with_symbols(ele_as_string) for ele_as_string in etree.tostringlist(diff_xml)]
             )
         else:
-            for element in diff_xml:
-                if element.tag != SAME:
-                    self._append_element_as_string(element, result)
+            if len(diff_xml) != len(diff_xml.xpath('./same')):
+                for element in diff_xml:
+                    print_same = (element.tag == SAME and len(element) == 1 and
+                                  len(diff_xml.xpath('.//{}'.format(element[0].tag))) == 1)
 
+                    self._append_element_as_string(element, result, print_same=print_same)
         return result if len(result) > 1 else []
 
     def _append_element_as_string(self, element, result, spaces=0, print_same=False):
@@ -148,25 +150,29 @@ class Block(object):
         hashes_seen = []
         self.final_diff = etree.Element(self.get_name())
         for ele_name, running_elements in self.elements_for_diff_on_running.items():
-            for index, (ele_hash, running_element) in enumerate(running_elements.items()):
+            for index, (running_elem_hash, running_element) in enumerate(running_elements.items()):
                 try:
                     candidate_elements = self.elements_for_diff_on_candidate[ele_name]
                 except KeyError:
                     running_elements_to_diff[ele_name].append(running_element)
                 else:
                     candidate_hash_list = list(candidate_elements.keys())
-                    if ele_hash in candidate_elements:
-                        hashes_seen.append(ele_hash)
-                        if ele_hash == candidate_hash_list[index]:
+                    if running_elem_hash in candidate_elements:
+                        hashes_seen.append(running_elem_hash)
+                        try:
+                            candidate_elem_hash = candidate_hash_list[index]
+                        except IndexError:
+                            candidate_elem_hash = None
+                        if running_elem_hash == candidate_elem_hash:
                             etree.SubElement(self.final_diff, SAME).append(deepcopy(running_element))
                         else:
                             etree.SubElement(self.final_diff, MOVED).append(deepcopy(running_element))
                     else:
-                        running_elements_to_diff[ele_name].append(running_element)
+                        running_elements_to_diff[running_element.tag].append(running_element)
 
             for candidate_element_hash, candidate_element in candidate_elements.items():
                 if candidate_element_hash not in hashes_seen:
-                    candidate_elements_to_diff[ele_name].append(candidate_element)
+                    candidate_elements_to_diff[candidate_element.tag].append(candidate_element)
 
         self.added_or_removed_running_ele = running_elements_to_diff
         self.added_or_removed_candidate_ele = candidate_elements_to_diff
@@ -275,7 +281,10 @@ class Block(object):
             running_child_path = get_element_path(running_child)
             if not list(running_child):
                 seen_path.append(running_child_path)
-                running_child_on_diff = diff.xpath(running_child_path)[0]
+                try:
+                    running_child_on_diff = diff.xpath(running_child_path)[0]
+                except IndexError:
+                    continue
                 running_child_parent_on_diff = running_child_on_diff.getparent()
                 try:
                     candidate_child = candidate_element.xpath(running_child_path)[0]
@@ -299,7 +308,10 @@ class Block(object):
                     candidate_child_parent_path = get_element_path(candidate_child.getparent())
                     running_child = running_element.xpath(candidate_child_path)
                     if not list(running_child) and candidate_child_parent_path not in seen_path:
-                        candidate_child_parent_on_diff = diff.xpath(candidate_child_parent_path)[0]
+                        try:
+                            candidate_child_parent_on_diff = diff.xpath(candidate_child_parent_path)[0]
+                        except IndexError:
+                            continue
                         candidate_child_parent_on_diff.append(Block._surround_element_with_tag(candidate_child, ADDED))
                         seen_path.append(candidate_child_path)
         return diff
