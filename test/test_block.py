@@ -809,7 +809,7 @@ class TestBlock(TestCase):
                         <peerAddr>10.0.2.129</peerAddr>
                         <peerActivate>true</peerActivate>
                         <sourceId>lo</sourceId>
-                        <peerDesc>edge1-ec3-lon2</peerDesc>
+                        <peerDesc>foo-bar</peerDesc>
                         <peerAs>65432</peerAs>
                         <bgpPeerAddressFamily>
                             <afi>l2vpn</afi>
@@ -840,7 +840,7 @@ class TestBlock(TestCase):
                         <peerAddr>10.0.2.129</peerAddr>
                         <peerActivate>true</peerActivate>
                         <sourceId>lo</sourceId>
-                        <peerDesc>edge1-ec3-lon2</peerDesc>
+                        <peerDesc>foo-bar</peerDesc>
                         <peerAs>65432</peerAs>
                         <bgpPeerAddressFamily>
                             <afi>l2vpn</afi>
@@ -854,7 +854,7 @@ class TestBlock(TestCase):
                         <peerAddr>10.0.2.129</peerAddr>
                         <peerActivate>true</peerActivate>
                         <sourceId>lo</sourceId>
-                        <peerDesc>edge2-ec3-lon2</peerDesc>
+                        <peerDesc>foo-bar</peerDesc>
                         <peerAs>65432</peerAs>
                         <bgpPeerAddressFamily>
                             <afi>l2vpn</afi>
@@ -882,7 +882,7 @@ class TestBlock(TestCase):
         self.assertTrue('+   <peerAddr>10.0.2.129</peerAddr>' in actual)
         self.assertTrue('+   <peerActivate>true</peerActivate>' in actual)
         self.assertTrue('+   <sourceId>lo</sourceId>' in actual)
-        self.assertTrue('+   <peerDesc>edge2-ec3-lon2</peerDesc>' in actual)
+        self.assertTrue('+   <peerDesc>foo-bar</peerDesc>' in actual)
         self.assertTrue('+   <peerAs>65432</peerAs>' in actual)
         self.assertTrue('+   <bgpPeerAddressFamily>' in actual)
         self.assertTrue('+     <afi>l2vpn</afi>' in actual)
