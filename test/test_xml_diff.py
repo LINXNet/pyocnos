@@ -231,6 +231,7 @@ class TestXmlDiff(TestCase):
             '    <portChannelLoadBal>rtag7</portChannelLoadBal>',
             '  </interface>',
             '[nsmsnmp]',
+            '  <vrfName>management</vrfName>',
             '- <enabled>true</enabled>',
             '+ <enabled>false</enabled>',
             '[logging_cli]',
