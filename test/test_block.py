@@ -965,6 +965,36 @@ class TestBlock(TestCase):
         self.assertTrue('-   <name>has</name>' in actual)
         self.assertTrue('- </bgp>' in actual)
 
+    def test_when_deep_same_tags(self):
+        running_str = """
+                   <vr>
+                       <interface>
+                            <ifName>xe17</ifName>
+                            <loadInterval>30</loadInterval>
+                            <description>ecmem8-C914057</description>
+                            <isAutospeed>true</isAutospeed>
+                            <speed>1g</speed>
+                       </interface>
+                   </vr>
+                   """
+        candidate_str = """
+                   <vr>
+                       <interface>
+                           <ifName>xe17</ifName>
+                            <loadInterval>30</loadInterval>
+                            <description>ecmem8-C914057</description>
+                            <speed>1g</speed>
+                            <isAutospeed>true</isAutospeed>
+                       </interface>
+                   </vr>
+                   """
+        running = etree.fromstring(running_str)
+        candidate = etree.fromstring(candidate_str)
+        block = Block(running, candidate)
+
+        actual = block.get_printable_diff()
+        self.assertEqual([], actual)
+
     @staticmethod
     def _get_element(tag, child_tag, child_text):
         element = etree.Element(tag)
