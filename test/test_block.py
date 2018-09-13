@@ -809,7 +809,7 @@ class TestBlock(TestCase):
                         <peerAddr>10.0.2.129</peerAddr>
                         <peerActivate>true</peerActivate>
                         <sourceId>lo</sourceId>
-                        <peerDesc>edge1-ec3-lon2</peerDesc>
+                        <peerDesc>foo-bar</peerDesc>
                         <peerAs>65432</peerAs>
                         <bgpPeerAddressFamily>
                             <afi>l2vpn</afi>
@@ -840,7 +840,7 @@ class TestBlock(TestCase):
                         <peerAddr>10.0.2.129</peerAddr>
                         <peerActivate>true</peerActivate>
                         <sourceId>lo</sourceId>
-                        <peerDesc>edge1-ec3-lon2</peerDesc>
+                        <peerDesc>foo-bar</peerDesc>
                         <peerAs>65432</peerAs>
                         <bgpPeerAddressFamily>
                             <afi>l2vpn</afi>
@@ -854,7 +854,7 @@ class TestBlock(TestCase):
                         <peerAddr>10.0.2.129</peerAddr>
                         <peerActivate>true</peerActivate>
                         <sourceId>lo</sourceId>
-                        <peerDesc>edge2-ec3-lon2</peerDesc>
+                        <peerDesc>foo-bar</peerDesc>
                         <peerAs>65432</peerAs>
                         <bgpPeerAddressFamily>
                             <afi>l2vpn</afi>
@@ -882,7 +882,7 @@ class TestBlock(TestCase):
         self.assertTrue('+   <peerAddr>10.0.2.129</peerAddr>' in actual)
         self.assertTrue('+   <peerActivate>true</peerActivate>' in actual)
         self.assertTrue('+   <sourceId>lo</sourceId>' in actual)
-        self.assertTrue('+   <peerDesc>edge2-ec3-lon2</peerDesc>' in actual)
+        self.assertTrue('+   <peerDesc>foo-bar</peerDesc>' in actual)
         self.assertTrue('+   <peerAs>65432</peerAs>' in actual)
         self.assertTrue('+   <bgpPeerAddressFamily>' in actual)
         self.assertTrue('+     <afi>l2vpn</afi>' in actual)
@@ -964,6 +964,36 @@ class TestBlock(TestCase):
         self.assertTrue('- <bgp>' in actual)
         self.assertTrue('-   <name>has</name>' in actual)
         self.assertTrue('- </bgp>' in actual)
+
+    def test_when_deep_same_tags(self):
+        running_str = """
+                   <vr>
+                       <interface>
+                            <ifName>xe17</ifName>
+                            <loadInterval>30</loadInterval>
+                            <description>ecmem8-C914057</description>
+                            <isAutospeed>true</isAutospeed>
+                            <speed>1g</speed>
+                       </interface>
+                   </vr>
+                   """
+        candidate_str = """
+                   <vr>
+                       <interface>
+                           <ifName>xe17</ifName>
+                            <loadInterval>30</loadInterval>
+                            <description>ecmem8-C914057</description>
+                            <speed>1g</speed>
+                            <isAutospeed>true</isAutospeed>
+                       </interface>
+                   </vr>
+                   """
+        running = etree.fromstring(running_str)
+        candidate = etree.fromstring(candidate_str)
+        block = Block(running, candidate)
+
+        actual = block.get_printable_diff()
+        self.assertEqual([], actual)
 
     @staticmethod
     def _get_element(tag, child_tag, child_text):

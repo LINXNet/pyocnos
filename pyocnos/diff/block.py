@@ -81,7 +81,7 @@ class Block(object):
                 [self._format_element_with_symbols(ele_as_string) for ele_as_string in etree.tostringlist(diff_xml)]
             )
         else:
-            if len(diff_xml) != len(diff_xml.xpath('./same')):
+            if diff_xml.xpath('.//removed | .//added | .//moved'):
                 for element in diff_xml:
                     print_same = (element.tag == SAME and len(element) == 1 and
                                   len(diff_xml.xpath('.//{}'.format(element[0].tag))) == 1)
