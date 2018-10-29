@@ -5,6 +5,7 @@ from __future__ import print_function
 import argparse
 import io
 import textwrap
+import logging
 
 import yaml
 
@@ -31,6 +32,10 @@ def process(config_file_path, hostname, actions, save_config_file_path, candidat
     username = config['config']['username']
     password = config['config']['password']
     timeout = config['config']['timeout']
+
+    debug = config['config'].get('debug', False)
+    if debug:
+        logging.getLogger('ncclient.transport.ssh').setLevel(logging.DEBUG)
 
     with OCNOS(hostname=hostname, username=username, password=password, timeout=timeout) as device:
         output = []
