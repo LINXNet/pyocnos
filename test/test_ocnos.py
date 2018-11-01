@@ -14,7 +14,7 @@ from pyocnos.exceptions import OCNOSLoadCandidateConfigFileReadError
 from pyocnos.exceptions import OCNOSNoCandidateConfigError
 from pyocnos.exceptions import OCNOSUnOpenedConnectionError
 from pyocnos.exceptions import OCNOSUnableToRetrieveConfigError
-from pyocnos.ocnos import OCNOS
+from pyocnos.ocnos import OCNOS, unknown_host_cb
 
 connect_path = 'pyocnos.ocnos.manager.connect'
 
@@ -29,7 +29,8 @@ class TestOCNOS(unittest.TestCase):
         mock_manager_connect.assert_called_with(
             host='hostname', port=830, username='username',
             password='password', timeout=100,
-            look_for_keys=False
+            look_for_keys=False,
+            unknown_host_cb=unknown_host_cb
         )
 
     @mock.patch(connect_path)
@@ -40,7 +41,8 @@ class TestOCNOS(unittest.TestCase):
         mock_manager_connect.assert_called_with(
             host='hostname', port=830, username='username',
             password='password', timeout=60,
-            look_for_keys=False
+            look_for_keys=False,
+            unknown_host_cb=unknown_host_cb
         )
         close_session_mock.assert_called_once()
 

@@ -95,4 +95,5 @@ ENV/
 test/user-details.ini
 test_report_*.xml
 */user-details.yml
+user-details.yml
 test/configs/*.xml

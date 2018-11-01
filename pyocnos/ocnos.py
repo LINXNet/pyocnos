@@ -11,6 +11,7 @@ from ncclient import NCClientError
 from ncclient import manager
 
 from pyocnos.diff.xml_diff import XmlDiff
+from pyocnos.input import query_yes_no
 from pyocnos.exceptions import OCNOSCandidateConfigInvalidError
 from pyocnos.exceptions import OCNOSCandidateConfigNotInServerCapabilitiesError
 from pyocnos.exceptions import OCNOSCandidateConfigNotLoadedError
@@ -19,6 +20,22 @@ from pyocnos.exceptions import OCNOSLoadCandidateConfigFileReadError
 from pyocnos.exceptions import OCNOSNoCandidateConfigError
 from pyocnos.exceptions import OCNOSUnOpenedConnectionError
 from pyocnos.exceptions import OCNOSUnableToRetrieveConfigError
+
+
+def unknown_host_cb(host, fingerprint):
+    """
+    Called when there is an unknown host fingerprint
+    :param host:
+    :type host: str
+    :param fingerprint:
+    :type fingerprint: str
+    :return: Accept the fingerprint?
+    :rtype: bool
+    """
+    return query_yes_no('Unknown fingerprint of host %s.\n'
+                        'The fingerprint is %s\n'
+                        'Do you wish to continue with the connection?'
+                        % (host, fingerprint))
 
 
 class OCNOS(object):
@@ -82,7 +99,8 @@ class OCNOS(object):
                 username=self.username,
                 password=self.password,
                 timeout=self.timeout,
-                look_for_keys=False
+                look_for_keys=False,
+                unknown_host_cb=unknown_host_cb
             )
             # todo: Remove this once Ipinfusion have fix issue on as5812 switches for timeout
             sleep(2)
