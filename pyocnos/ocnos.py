@@ -23,6 +23,15 @@ from pyocnos.exceptions import OCNOSUnableToRetrieveConfigError
 
 
 def unknown_host_cb(host, fingerprint):
+    """
+    Called when there is an unknown host fingerprint
+    :param host:
+    :type host: str
+    :param fingerprint:
+    :type fingerprint: str
+    :return: Accept the fingerprint?
+    :rtype: bool
+    """
     return query_yes_no('Unknown fingerprint of host %s.\n'
                         'The fingerprint is %s\n'
                         'Do you wish to continue with the connection?'
