@@ -4,11 +4,14 @@ Class to communicate with devices running OcNOS operating system
 import logging
 # todo: Remove this once Ipinfusion have fix issue on as5812 switches for timeout
 from time import sleep
+import os
 
 import lxml
 from future.utils import raise_from
 from ncclient import NCClientError
 from ncclient import manager
+import paramiko
+from binascii import hexlify
 
 from pyocnos.diff.xml_diff import XmlDiff
 from pyocnos.input import query_yes_no
@@ -22,20 +25,67 @@ from pyocnos.exceptions import OCNOSUnOpenedConnectionError
 from pyocnos.exceptions import OCNOSUnableToRetrieveConfigError
 
 
-def unknown_host_cb(host, fingerprint):
+class PromptPolicy(paramiko.MissingHostKeyPolicy):
     """
-    Called when there is an unknown host fingerprint
-    :param host:
-    :type host: str
-    :param fingerprint:
-    :type fingerprint: str
-    :return: Accept the fingerprint?
-    :rtype: bool
+    Policy for prompting the user to add the host to known hosts.
+
+    Snippets taken from paramiko.AutoAddPolicy, paramiko.RejectPolicy
     """
-    return query_yes_no('Unknown fingerprint of host %s.\n'
-                        'The fingerprint is %s\n'
-                        'Do you wish to continue with the connection?'
-                        % (host, fingerprint))
+    def missing_host_key(self, client, hostname, key):
+        key_name = key.get_name()
+        fingerprint = hexlify(key.get_fingerprint())
+
+        accept = query_yes_no('Unknown fingerprint of host %s.\n'
+                              'The %s fingerprint is %s.\n'
+                              'Do you wish to continue with the connection?'
+                              % (hostname, key_name, fingerprint))
+        if not accept:
+            client._log(
+                logging.DEBUG,
+                "Rejecting {} host key for {}: {}".format(
+                    key_name, hostname, fingerprint
+                ),
+            )
+            raise paramiko.SSHException(
+                "Server {!r} not found in known_hosts".format(hostname)
+            )
+
+        client._host_keys.add(hostname, key_name, key)
+        if client._host_keys_filename is not None:
+            client.save_host_keys(client._host_keys_filename)
+        client._log(
+            logging.DEBUG,
+            "Adding {} host key for {}: {}".format(
+                key_name, hostname, fingerprint
+            ),
+        )
+
+
+def get_unknown_host_cb(ocnos):
+    def unknown_host_cb(host, fingerprint):
+        """
+        Called when there is an unknown host fingerprint
+        :param host:
+        :type host: str
+        :param fingerprint:
+        :type fingerprint: str
+        :return: Accept the fingerprint?
+        :rtype: bool
+        """
+        with paramiko.SSHClient() as ssh_client:
+            keys_path = os.path.expanduser("~/.ssh/known_hosts")
+            ssh_client.load_host_keys(keys_path)
+            ssh_client.set_missing_host_key_policy(PromptPolicy)
+            try:
+                ssh_client.connect(host, username=ocnos.username,
+                                   password=ocnos.password,
+                                   port=ocnos.port,
+                                   look_for_keys=False)
+                ssh_client.close()
+            except paramiko.SSHException:
+                return False
+        return True
+    return unknown_host_cb
 
 
 class OCNOS(object):
@@ -43,7 +93,7 @@ class OCNOS(object):
     Class to instantiate a OcNOS device
     """
 
-    def __init__(self, hostname, username, password, timeout=60):
+    def __init__(self, hostname, username, password, timeout=60, port=830):
         """
         OCNOS device constructor.
         Args:
@@ -51,11 +101,13 @@ class OCNOS(object):
             username: (str) Username
             password: (str) Password
             timeout: (int) Timeout (default: 60 sec)
+            port: (int) Port (default: 830)
         """
         self.hostname = hostname
         self.username = username
         self.password = password
         self.timeout = timeout
+        self.port = port
 
         self._connection = None
         self._candidate_config = None
@@ -95,12 +147,12 @@ class OCNOS(object):
         try:
             self._connection = manager.connect(
                 host=self.hostname,
-                port=830,
+                port=self.port,
                 username=self.username,
                 password=self.password,
                 timeout=self.timeout,
                 look_for_keys=False,
-                unknown_host_cb=unknown_host_cb
+                unknown_host_cb=get_unknown_host_cb(self)
             )
             # todo: Remove this once Ipinfusion have fix issue on as5812 switches for timeout
             sleep(2)
