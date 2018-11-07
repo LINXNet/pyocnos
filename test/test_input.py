@@ -18,7 +18,7 @@ class TestInput(unittest.TestCase):
             }
             mock_raw_input.side_effect = answers.keys()
             for result in answers.values():
-                self.assertEquals(query_yes_no(''), result)
+                self.assertEqual(query_yes_no(''), result)
 
     def test_query_yes_no_multiple_attempts(self):
         with mock.patch(raw_input_path) as mock_raw_input:
