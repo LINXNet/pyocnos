@@ -25,4 +25,4 @@ class TestInput(unittest.TestCase):
             answers = ['not an answer', 'i dont know', 'yes']
             mock_raw_input.side_effect = answers
             self.assertTrue(query_yes_no(''))
-            self.assertEquals(mock_raw_input.call_count, len(answers))
+            self.assertEqual(mock_raw_input.call_count, len(answers))

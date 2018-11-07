@@ -5,13 +5,13 @@ import logging
 # todo: Remove this once Ipinfusion have fix issue on as5812 switches for timeout
 from time import sleep
 import os
+from binascii import hexlify
 
 import lxml
 from future.utils import raise_from
 from ncclient import NCClientError
 from ncclient import manager
 import paramiko
-from binascii import hexlify
 
 from pyocnos.diff.xml_diff import XmlDiff
 from pyocnos.input import query_yes_no
@@ -26,12 +26,14 @@ from pyocnos.exceptions import OCNOSUnableToRetrieveConfigError
 
 
 class PromptPolicy(paramiko.MissingHostKeyPolicy):
+    # pylint: disable=too-few-public-methods
     """
     Policy for prompting the user to add the host to known hosts.
 
     Snippets taken from paramiko.AutoAddPolicy, paramiko.RejectPolicy
     """
     def missing_host_key(self, client, hostname, key):
+        # pylint: disable=protected-access
         key_name = key.get_name()
         fingerprint = hexlify(key.get_fingerprint())
 
@@ -62,6 +64,11 @@ class PromptPolicy(paramiko.MissingHostKeyPolicy):
 
 
 def get_unknown_host_cb(ocnos):
+    """
+    Wrapper to return real callback so as ocnos properties can be accessed
+    :param ocnos:
+    :type ocnos: OCNOS
+    """
     def unknown_host_cb(host, fingerprint):
         """
         Called when there is an unknown host fingerprint
@@ -89,11 +96,13 @@ def get_unknown_host_cb(ocnos):
 
 
 class OCNOS(object):
+    # pylint: disable=too-many-instance-attributes
     """
     Class to instantiate a OcNOS device
     """
 
     def __init__(self, hostname, username, password, timeout=60, port=830):
+        # pylint: disable=too-many-arguments
         """
         OCNOS device constructor.
         Args:
