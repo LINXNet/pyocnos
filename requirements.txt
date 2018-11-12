@@ -2,3 +2,4 @@ ncclient==0.5.3
 future
 lxml
 pyYAML
+paramiko
