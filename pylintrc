@@ -231,7 +231,10 @@ ignore-mixin-members=yes
 # List of module names for which member attributes should not be checked
 # (useful for modules/projects where namespaces are manipulated during runtime
 # and thus existing member attributes cannot be deduced by static analysis
-ignored-modules=
+
+# distutils is missing some modules in pylint
+# https://github.com/PyCQA/pylint/issues/73
+ignored-modules = distutils
 
 # List of classes names for which member attributes should not be checked
 # (useful for classes with attributes dynamically set).

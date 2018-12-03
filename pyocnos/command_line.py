@@ -37,7 +37,7 @@ def process(config_file_path, hostname, actions, save_config_file_path, candidat
     debug = config['config'].get('debug', False)
     if debug:
         logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-        logging.getLogger('ncclient.transport.ssh').setLevel(logging.DEBUG)
+        logging.getLogger().setLevel(logging.DEBUG)
 
     with OCNOS(hostname=hostname, username=username, password=password, timeout=timeout) as device:
         output = []

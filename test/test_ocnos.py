@@ -14,9 +14,23 @@ from pyocnos.exceptions import OCNOSLoadCandidateConfigFileReadError
 from pyocnos.exceptions import OCNOSNoCandidateConfigError
 from pyocnos.exceptions import OCNOSUnOpenedConnectionError
 from pyocnos.exceptions import OCNOSUnableToRetrieveConfigError
-from pyocnos.ocnos import OCNOS
+from pyocnos.ocnos import OCNOS, get_unknown_host_cb
 
 connect_path = 'pyocnos.ocnos.manager.connect'
+unknown_host_cb_path = 'pyocnos.ocnos.get_unknown_host_cb'
+
+
+def simple_unknown_host_cb(host, fingerprint):
+    return True
+
+
+def simple_get_unknown_host_cb(ocnos):
+    return simple_unknown_host_cb
+
+
+get_unknown_host_mock = mock.MagicMock(
+    side_effect=simple_get_unknown_host_cb
+)
 
 
 class TestOCNOS(unittest.TestCase):
@@ -24,15 +38,18 @@ class TestOCNOS(unittest.TestCase):
         self.device = OCNOS(hostname='hostname', username='username', password='password', timeout=100)
 
     @mock.patch(connect_path)
+    @mock.patch(unknown_host_cb_path, get_unknown_host_mock)
     def test_open(self, mock_manager_connect):
         self.device.open()
         mock_manager_connect.assert_called_with(
             host='hostname', port=830, username='username',
             password='password', timeout=100,
-            look_for_keys=False
+            look_for_keys=False,
+            unknown_host_cb=simple_unknown_host_cb
         )
 
     @mock.patch(connect_path)
+    @mock.patch(unknown_host_cb_path, get_unknown_host_mock)
     def test_ocnos_class_in_context(self, mock_manager_connect):
         with OCNOS(hostname='hostname', username='username', password='password') as device:
             close_session_mock = device._connection.close_session = mock.MagicMock()
@@ -40,7 +57,8 @@ class TestOCNOS(unittest.TestCase):
         mock_manager_connect.assert_called_with(
             host='hostname', port=830, username='username',
             password='password', timeout=60,
-            look_for_keys=False
+            look_for_keys=False,
+            unknown_host_cb=simple_unknown_host_cb
         )
         close_session_mock.assert_called_once()
 
