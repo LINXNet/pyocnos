@@ -315,7 +315,10 @@ class OCNOS(object):
         """
         if self._connection:
             try:
-                config = self._connection.get_config(source=config_name).data_xml
+                config = self._connection.get_config(
+                    source=config_name,
+                    with_defaults='trim'
+                ).data_xml
             except NCClientError as ncclient_exception:
                 self.log.error('Error', exc_info=True)
                 raise_from(

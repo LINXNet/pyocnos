@@ -1,4 +1,4 @@
-ncclient==0.5.3
+ncclient==0.6.3
 future
 lxml
 pyYAML
