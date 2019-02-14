@@ -4,7 +4,7 @@ Python library to remotely manage/automate switches running OcNOS operating syst
 ## Requirments
 
 ### Python
-* ncclient = 0.5.3
+* ncclient = 0.6.3
 
 ### Install via pip
 ```bash
