@@ -20,7 +20,7 @@ def process(config_file_path, hostname, actions, save_config_file_path, candidat
         config_file_path: (String) Path to the yaml file
          with username password and timeout
         hostname: (String) hostname of the device
-        actions: (List) of strings e.g ['apply', 'diff']
+        actions: (List) of strings e.g ['replace', 'merge', 'diff']
         save_config_file_path: (String) Where to store the running or startup config xml from device
         candidate_file_path: (String) Path to the candidate file
 
@@ -56,8 +56,10 @@ def process(config_file_path, hostname, actions, save_config_file_path, candidat
                 if action == 'diff':
                     output.append(device.compare_config())
                 else:
-                    device.commit_config()
-                    output.append('Config applied to device')
+                    device.commit_config(
+                        replace_config=bool(action is 'replace')
+                    )
+                    output.append('Config %sd to device' % action)
         return output
 
 
@@ -68,7 +70,7 @@ def parse_and_get_args():
 
     """
     parser = argparse.ArgumentParser(
-        description='Diff and apply configs.',
+        description='Diff and Replace/Merge configs.',
         formatter_class=argparse.RawTextHelpFormatter
     )
 
@@ -85,11 +87,19 @@ def parse_and_get_args():
     parser.add_argument(
         'actions',
         nargs='+',
-        choices=['diff', 'apply', 'running', 'connection', 'startup'],
+        choices=[
+            'diff',
+            'replace',
+            'merge',
+            'running',
+            'connection',
+            'startup'
+        ],
         help=textwrap.dedent("""
         Please choose one or multiple actions from below
         'diff' Compare Running config with Candidate config.
-        'apply' Replace Running config with Candidate config.
+        'replace' Replace Running config with Candidate config.
+        'merge' Merge Candidate config with Running config.
         'running' Get running config from switch and save it to a file.
         'connection' Make a connection to device.
         'startup' Get startup config from switch and save it to a file.
@@ -115,8 +125,8 @@ def parse_and_get_args():
     )
 
     args = parser.parse_args()
-    if ('diff' in args.actions or 'apply' in args.actions) and not args.candidate_file_path:
-        parser.error("diff and apply actions requires -c, --candidate-file-path.")
+    if ('diff' in args.actions or 'replace' or 'merge' in args.actions) and not args.candidate_file_path:
+        parser.error("diff, replace and merge actions requires -c, --candidate-file-path.")
     return args
 
 

@@ -66,18 +66,21 @@ class PromptPolicy(paramiko.MissingHostKeyPolicy):
 def get_unknown_host_cb(ocnos):
     """
     Wrapper to return real callback so as ocnos properties can be accessed
-    :param ocnos:
-    :type ocnos: OCNOS
+
+    Args:
+        ocnos:      instance of OCNOS class
+
+    Returns:        unknown_host_cb function
     """
     def unknown_host_cb(host, fingerprint):
         """
         Called when there is an unknown host fingerprint
-        :param host:
-        :type host: str
-        :param fingerprint:
-        :type fingerprint: str
-        :return: Accept the fingerprint?
-        :rtype: bool
+
+        Args:
+            host:               (str) hostname
+            fingerprint:        (str) RSA key fingerprint
+
+        Returns:                (bool) Accept the fingerprint?
         """
         with paramiko.SSHClient() as ssh_client:
             keys_path = os.path.expanduser("~/.ssh/known_hosts")
@@ -97,20 +100,18 @@ def get_unknown_host_cb(ocnos):
 
 class OCNOS(object):
     # pylint: disable=too-many-instance-attributes
-    """
-    Class to instantiate a OcNOS device
-    """
+    """ Class to instantiate a OcNOS device """
 
     def __init__(self, hostname, username, password, timeout=60, port=830):
         # pylint: disable=too-many-arguments
         """
         OCNOS device constructor.
         Args:
-            hostname: (str) IP or FQDN of the target device
-            username: (str) Username
-            password: (str) Password
-            timeout: (int) Timeout (default: 60 sec)
-            port: (int) Port (default: 830)
+            hostname:   (str) IP or FQDN of the target device
+            username:   (str) Username
+            password:   (str) Password
+            timeout:    (int) Timeout (default: 60 sec)
+            port:       (int) Port (default: 830)
         """
         self.hostname = hostname
         self.username = username
@@ -149,8 +150,8 @@ class OCNOS(object):
         """
         Open a connection to an OcNOS running device using SSH.
 
-        Returns: None
-        Raises: OCNOSConnectionError
+        Returns:    None
+        Raises:     OCNOSConnectionError
         """
 
         try:
@@ -184,7 +185,6 @@ class OCNOS(object):
 
         Returns: None
         Raises: OCNOSConnectionError
-
         """
         if self._connection:
             try:
@@ -209,8 +209,7 @@ class OCNOS(object):
         """
         Check if the SSH connection is still alive.
 
-        Returns: Boolean
-
+        Returns:    (bool) True if the SSH connection is still alive.
         """
         return self._connection.connected if self._connection else False
 
@@ -218,15 +217,14 @@ class OCNOS(object):
         """
         Load candidate_config from a string or file like object
         Args:
-            filename: Path to the file containing the desired
-                          configuration. Default: None.
-            config: String containing the desired configuration.
-                          Default: None.
+            filename:       Path to the file containing the desired
+                            configuration. Default: None.
+            config:         String containing the desired configuration.
+                            Default: None.
 
-        Returns: None
-        Raises: OCNOSLoadCandidateConfigError,
-         OCNOSLoadCandidateConfigFileReadError
-
+        Returns:            None
+        Raises:             OCNOSLoadCandidateConfigError,
+                            OCNOSLoadCandidateConfigFileReadError
         """
         if filename is None and config is None:
             raise OCNOSNoCandidateConfigError
@@ -240,15 +238,22 @@ class OCNOS(object):
         self._candidate_config.tag = 'config'
         self.log.info('candidate_config loaded')
 
-    def commit_config(self):
+    def commit_config(self, replace_config=False):
         """
         Commit the loaded candidate config
-        Returns: None
-        Raises: OCNOSUnOpenedConnectionError
-            OCNOSCandidateConfigNotLoadedError
-            OCNOSCandidateConfigNotInServerCapabilitiesError
-            OCNOSCandidateConfigInvalidError
+
+        Args:
+            replace_config:     (bool) True if replacing the running config
+                                with the candidate config. Merging the two
+                                otherwise.
+
+        Returns:                None
+        Raises:                 OCNOSUnOpenedConnectionError
+                                OCNOSCandidateConfigNotLoadedError
+                                OCNOSCandidateConfigNotInServerCapabilitiesError
+                                OCNOSCandidateConfigInvalidError
         """
+
         if self._candidate_config is None:
             self.log.error('Error: Candidate config not loaded')
             raise OCNOSCandidateConfigNotLoadedError
@@ -265,6 +270,14 @@ class OCNOS(object):
         # edit it
         # commit will replace the running one with candidate
 
+        # Select the default operation. Either replacing or merging the config
+        if replace_config:
+            self.log.info('Replace Running config with Candidate config')
+            default_operation = 'replace'
+        else:
+            self.log.info('Merge Candidate config with Running config')
+            default_operation = 'merge'
+
         self._connection.discard_changes()
         with self._connection.locked(target='candidate'):
             try:
@@ -272,7 +285,7 @@ class OCNOS(object):
                     target='candidate',
                     config=self._candidate_config,
                     test_option='test-then-set',
-                    default_operation='replace'
+                    default_operation=default_operation
                 )
             except NCClientError as ncclient_exception:
                 self.log.error('error', exc_info=True)
@@ -286,9 +299,9 @@ class OCNOS(object):
     def compare_config(self):
         """
         Diff on the running and candidate config
-        Returns: List
-        Raises: OCNOSCandidateConfigNotLoadedError
-            OCNOSUnOpenedConnectionError
+        Returns:        List
+        Raises:         OCNOSCandidateConfigNotLoadedError
+                        OCNOSUnOpenedConnectionError
 
         """
         if self._candidate_config is None:
@@ -306,12 +319,11 @@ class OCNOS(object):
         """
         Get config from device depending on config name
         Args:
-            config_name: (String) e.g. running or startup
+            config_name:    (str) e.g. running or startup
 
-        Returns: (String) xml string representing the config
-        Raises: OCNOSUnOpenedConnectionError,
-         OCNOSUnableToRetrieveConfigError
-
+        Returns:            (str) xml string representing the config
+        Raises:             OCNOSUnOpenedConnectionError,
+                            OCNOSUnableToRetrieveConfigError
         """
         if self._connection:
             try:
@@ -337,10 +349,10 @@ class OCNOS(object):
         """
         Get all or a specific config
         Args:
-            retrieve: (String) could be all or one of startup, running,
-              or candidate
+            retrieve:   (str) could be all or one of startup, running,
+                        or candidate
 
-        Returns: Dict
+        Returns:        (dict)
 
         """
         return {
@@ -353,7 +365,7 @@ class OCNOS(object):
         """
         Clear previously loaded candidate_config without committing it.
 
-        Returns: None
+        Returns:    None
         """
 
         self._candidate_config = None

@@ -66,24 +66,51 @@ class TestParseAndGetArgsFunction(TestCase):
         with mock.patch.object(sys, 'argv', ['prog', 'test.ini', 'foo.com', 'diff']):
             self.assertRaises(SystemExit, parse_and_get_args)
 
-    def test_fail_when_actions_contains_apply_and_no_candidate_file_path_given(self):
-        with mock.patch.object(sys, 'argv', ['prog', 'test.ini', 'foo.com', 'apply']):
+    def test_fail_when_actions_contains_replace_and_no_candidate_file_path_given(self):
+        with mock.patch.object(sys, 'argv', ['prog', 'test.ini', 'foo.com', 'replace']):
             self.assertRaises(SystemExit, parse_and_get_args)
 
-    def test_success_when_actions_contains_apply_and_candidate_file_path_given_with_short_option(self):
-        with mock.patch.object(sys, 'argv', ['prog', 'test.ini', 'foo.com', 'apply', '-c', 'can-new']):
+    def test_fail_when_actions_contains_merge_and_no_candidate_file_path_given(self):
+        with mock.patch.object(sys, 'argv', ['prog', 'test.ini', 'foo.com', 'merge']):
+            self.assertRaises(SystemExit, parse_and_get_args)
+
+    def test_fail_when_actions_contains_diff_and_no_candidate_file_path_given(self):
+        with mock.patch.object(sys, 'argv', ['prog', 'test.ini', 'foo.com', 'diff']):
+            self.assertRaises(SystemExit, parse_and_get_args)
+
+    def test_success_when_actions_contains_replace_and_candidate_file_path_given_with_short_option(self):
+        with mock.patch.object(sys, 'argv', ['prog', 'test.ini', 'foo.com', 'replace', '-c', 'can-new']):
             args = parse_and_get_args()
 
             self.assertEqual('can-new', args.candidate_file_path)
 
-    def test_success_when_actions_contains_apply_and_candidate_file_path_given_with_long_option(self):
-        arguments = ['prog', 'test.ini', 'foo.com', 'apply', '--candidate-file-path', 'can-new-file']
+    def test_success_when_actions_contains_merge_and_candidate_file_path_given_with_short_option(self):
+        with mock.patch.object(sys, 'argv', ['prog', 'test.ini', 'foo.com', 'merge', '-c', 'can-new']):
+            args = parse_and_get_args()
+
+            self.assertEqual('can-new', args.candidate_file_path)
+
+    def test_success_when_actions_contains_diff_and_candidate_file_path_given_with_short_option(self):
+        with mock.patch.object(sys, 'argv', ['prog', 'test.ini', 'foo.com', 'diff', '-c', 'can-new']):
+            args = parse_and_get_args()
+
+            self.assertEqual('can-new', args.candidate_file_path)
+
+    def test_success_when_actions_contains_replace_and_candidate_file_path_given_with_long_option(self):
+        arguments = ['prog', 'test.ini', 'foo.com', 'replace', '--candidate-file-path', 'can-new-file']
         with mock.patch.object(sys, 'argv', arguments):
             args = parse_and_get_args()
 
             self.assertEqual('can-new-file', args.candidate_file_path)
 
-    def test_success_when_actions_contains_apply_and_candidate_file_path_given_with_long_option(self):
+    def test_success_when_actions_contains_merge_and_candidate_file_path_given_with_long_option(self):
+        arguments = ['prog', 'test.ini', 'foo.com', 'merge', '--candidate-file-path', 'can-new-file']
+        with mock.patch.object(sys, 'argv', arguments):
+            args = parse_and_get_args()
+
+            self.assertEqual('can-new-file', args.candidate_file_path)
+
+    def test_success_when_actions_contains_diff_and_candidate_file_path_given_with_long_option(self):
         arguments = ['prog', 'test.ini', 'foo.com', 'diff', '--candidate-file-path', 'can-new-file']
         with mock.patch.object(sys, 'argv', arguments):
             args = parse_and_get_args()
@@ -173,12 +200,25 @@ class TestProcessFunction(TestCase):
         ocnos_instance.compare_config.assert_called_once()
 
     @mock.patch(ocnos_class_path, autospec=True)
-    def test_success_apply_action(self, mock_ocnos):
+    def test_success_replace_action(self, mock_ocnos):
         ocnos_instance = mock_ocnos.return_value.__enter__.return_value
         process(
             config_file_path=os.path.join(current_path, 'user-details.yml.example'),
             hostname='foobar.com',
-            actions=['apply'],
+            actions=['replace'],
+            save_config_file_path=None,
+            candidate_file_path='candidate.xml'
+        )
+        ocnos_instance.load_candidate_config.assert_called_once_with(filename='candidate.xml')
+        ocnos_instance.commit_config.assert_called_once()
+
+    @mock.patch(ocnos_class_path, autospec=True)
+    def test_success_merge_action(self, mock_ocnos):
+        ocnos_instance = mock_ocnos.return_value.__enter__.return_value
+        process(
+            config_file_path=os.path.join(current_path, 'user-details.yml.example'),
+            hostname='foobar.com',
+            actions=['merge'],
             save_config_file_path=None,
             candidate_file_path='candidate.xml'
         )
@@ -191,7 +231,7 @@ class TestProcessFunction(TestCase):
         process(
             config_file_path=os.path.join(current_path, 'user-details.yml.example'),
             hostname='foobar.com',
-            actions=['apply', 'diff'],
+            actions=['replace', 'diff'],
             save_config_file_path=None,
             candidate_file_path='candidate.xml'
         )
