@@ -165,7 +165,7 @@ class TestOCNOS(unittest.TestCase):
         instance.commit.assert_not_called()
         instance.copy_config.assert_not_called()
 
-    def test_success_commit_config(self):
+    def test_success_commit_merge_config(self):
         config = '<config></config>'
         with mock.patch(connect_path) as mock_manager_connect:
             instance = mock_manager_connect.return_value
@@ -175,7 +175,33 @@ class TestOCNOS(unittest.TestCase):
                 ':candidate',
                 ':validate:1.0'
             ]
-            self.device.commit_config()
+            self.device.commit_config(replace_config=False)
+            self.device.close()
+        instance.discard_changes.assert_called_once()
+        instance.locked.assert_called_with(target='candidate')
+        instance.edit_config.assert_called_once_with(
+            config=self.device._candidate_config,
+            target='candidate',
+            test_option='test-then-set',
+            default_operation='merge'
+        )
+        instance.commit.assert_called_once_with()
+        instance.copy_config.assert_called_once_with(
+            target='startup',
+            source='running'
+        )
+
+    def test_success_commit_replace_config(self):
+        config = '<config></config>'
+        with mock.patch(connect_path) as mock_manager_connect:
+            instance = mock_manager_connect.return_value
+            self.device.open()
+            self.device.load_candidate_config(config=config)
+            self.device._connection.server_capabilities = [
+                ':candidate',
+                ':validate:1.0'
+            ]
+            self.device.commit_config(replace_config=True)
             self.device.close()
         instance.discard_changes.assert_called_once()
         instance.locked.assert_called_with(target='candidate')

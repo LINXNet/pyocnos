@@ -57,7 +57,7 @@ def process(config_file_path, hostname, actions, save_config_file_path, candidat
                     output.append(device.compare_config())
                 else:
                     device.commit_config(
-                        replace_config=bool(action is 'replace')
+                        replace_config=bool(action == 'replace')
                     )
                     output.append('Config %sd to device' % action)
         return output
@@ -125,7 +125,7 @@ def parse_and_get_args():
     )
 
     args = parser.parse_args()
-    if ('diff' in args.actions or 'replace' or 'merge' in args.actions) and not args.candidate_file_path:
+    if any(action in args.actions for action in ['diff', 'replace', 'merge']) and not args.candidate_file_path:
         parser.error("diff, replace and merge actions requires -c, --candidate-file-path.")
     return args
 
