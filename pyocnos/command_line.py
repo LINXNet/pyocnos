@@ -28,7 +28,7 @@ def process(config_file_path, hostname, actions, save_config_file_path, candidat
 
     """
     with open(config_file_path, 'r') as yml_file:
-        config = yaml.load(yml_file)
+        config = yaml.safe_load(yml_file)
 
     username = config['config']['username']
     password = config['config']['password']
