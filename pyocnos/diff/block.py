@@ -170,6 +170,7 @@ class Block(object):
                     else:
                         running_elements_to_diff[running_element.tag].append(running_element)
 
+        for ele_name, candidate_elements in self.elements_for_diff_on_candidate.items():
             for candidate_element_hash, candidate_element in candidate_elements.items():
                 if candidate_element_hash not in hashes_seen:
                     candidate_elements_to_diff[candidate_element.tag].append(candidate_element)
@@ -256,9 +257,7 @@ class Block(object):
                 diffs.append(Block._surround_element_with_tag(running, REMOVED))
                 diffs.append(Block._surround_element_with_tag(candidate, ADDED))
         else:
-            removed_element = etree.Element(REMOVED)
-            removed_element.append(deepcopy(running))
-            diffs.append(removed_element)
+            diffs.append(Block._surround_element_with_tag(running, REMOVED))
 
         return diffs
 
