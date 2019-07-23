@@ -287,13 +287,13 @@ class OCNOS(object):
                     test_option='test-then-set',
                     default_operation=default_operation
                 )
+            	self._connection.commit()
             except NCClientError as ncclient_exception:
                 self.log.error('error', exc_info=True)
                 raise_from(
                     OCNOSCandidateConfigInvalidError,
                     ncclient_exception
                 )
-            self._connection.commit()
         self._connection.copy_config(source='running', target='startup')
 
     def compare_config(self):
