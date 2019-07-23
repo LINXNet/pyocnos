@@ -287,7 +287,7 @@ class OCNOS(object):
                     test_option='test-then-set',
                     default_operation=default_operation
                 )
-            	self._connection.commit()
+                self._connection.commit()
             except NCClientError as ncclient_exception:
                 self.log.error('error', exc_info=True)
                 raise_from(
