@@ -69,10 +69,10 @@ def intersection(hashelemes_left, hashelemes_right):
         occurance_diff = hashes_left.count(hash_) - hashes_right.count(hash_)
         if occurance_diff > 0:
             tree_diff[REMOVED].extend([x.elem for x in
-                                       (x for x in hashelemes_left if x.hash == hash_)[:occurance_diff]])
+                                       [x for x in hashelemes_left if x.hash == hash_][:occurance_diff]])
         elif occurance_diff < 0:
             tree_diff[ADDED].extend([x.elem for x in
-                                     (x for x in hashelemes_right if x.hash == hash_)[occurance_diff:]])
+                                     [x for x in hashelemes_right if x.hash == hash_][occurance_diff:]])
 
     return tree_diff
 
