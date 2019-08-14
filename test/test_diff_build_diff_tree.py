@@ -185,11 +185,11 @@ def test_build_diff_tree_change_in_same_tag():
     expected = compact("""
         <data>
           <foo change='removed'>100</foo>
-          <foo change='added'>
-            <bar>20</bar>
-          </foo>
           <foo change='removed'>
             <bar>200</bar>
+          </foo>
+          <foo change='added'>
+            <bar>20</bar>
           </foo>
         </data>
     """)

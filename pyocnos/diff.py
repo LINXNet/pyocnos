@@ -85,7 +85,7 @@ def has_changed_children(element):
 
     Returns: boolean
     """
-    return bool(element.xpath('.//*[@change="%s"]' % REMOVED) or element.xpath('.//*[@change=%s]' % ADDED))
+    return bool(element.xpath('.//*[@change="%s"]' % REMOVED) or element.xpath('.//*[@change="%s"]' % ADDED))
 
 
 def has_children(element):
@@ -125,7 +125,11 @@ def intersection(hashelemes_left, hashelemes_right):
         elif occurance_diff < 0:
             tree_diff[ADDED].extend([x.elem for x in
                                      [x for x in hashelemes_right if x.hash == hash_][occurance_diff:]])
-
+        else:
+            """
+            This, i.e. occurance_diff ==0, indicates an unchanged no children element, which is actually
+            the vast majority case.
+            """
     return tree_diff
 
 
@@ -234,7 +238,7 @@ def build_diff_tree(tree_ref, diffs):
         added_elem = deepcopy(elem)
         added_elem.set('change', ADDED)
         if found:
-            found[0].addnext(added_elem)
+            found[-1].addnext(added_elem)
         else:
             tree_diff.xpath(get_parent_path(elem))[0].append(added_elem)
 
@@ -305,7 +309,7 @@ def build_xml_diff(xmlstring_left, xmlstring_right):
         raise ValueError('The root tags must be the same! '
                          'left: {}, right: {}'.format(tree_left.tag, tree_right.tag))
 
-    if not has_children(tree_left) and not has_children(tree_right):
+    if not (has_children(tree_left) and has_children(tree_right)):
         raise ValueError('Comparing simple xml with no children elements is not supported.')
 
     hash_left = sha(tree_left)

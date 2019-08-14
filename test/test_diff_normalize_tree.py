@@ -1,7 +1,16 @@
+"""
+This test module covers tests cases for function pyocnos.diff.normalize_tree()
+"""
+
 from lxml import etree
+
+from pyocnos.diff import normalize_tree
 
 
 def test_normalize_tree():
+    """
+    Ensure normalize_tree() wipe off name spaces, prefixes, redundant white spaces and new lines.
+    """
     string = """
       <data xmlns="http://www.company.com/TOOSchema/BarOS"
             xmlns:a="http://www.company.com/TOOSchema/BarOS"
