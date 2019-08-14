@@ -3,6 +3,7 @@ This test module covers tests cases for function pyocnos.diff.rdiff()
 """
 # pylint: disable=invalid-name
 
+import pytest
 from lxml import etree
 from pyocnos.diff import HashElement, sha, rdiff, normalize_tree
 
@@ -21,6 +22,58 @@ def text_repr(diffs):
     """
     return {change_type:[etree.tostring(elem) for elem in elems]
             for change_type, elems in diffs.items()}
+
+
+def test_rdiff_root_tag_mismatch():
+    """
+    The root tag will be ignored thus in this scenario only their children are compared.
+    It is because rdiff() is desigend to be only compare values in their children.
+    """
+    left_tree = """
+        <data>
+          <foo>
+            100
+          </foo>
+        </data>
+    """
+    right_tree = """
+        <config>
+          <foo>
+            100
+          </foo>
+        </config>
+    """
+
+    expected = {
+        'removed': [],
+        'added': []
+    }
+
+    assert text_repr(rdiff(build_hashelement(left_tree), build_hashelement(right_tree))) == expected
+
+
+def test_rdiff_neither_with_children():
+    """
+    Comparing simple elements with no children is supported but not diff will be generated.
+    It is because rdiff() is desigend to be only compare values in their children.
+    """
+    left_tree = """
+        <data>
+          100
+        </data>
+    """
+    right_tree = """
+        <data>
+          200
+        </data>
+    """
+
+    expected = {
+        'removed': [],
+        'added': []
+    }
+
+    assert text_repr(rdiff(build_hashelement(left_tree), build_hashelement(right_tree))) == expected
 
 
 def test_rdiff_simple_left_complement_only():
