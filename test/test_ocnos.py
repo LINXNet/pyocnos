@@ -230,7 +230,11 @@ class TestOCNOS(unittest.TestCase):
             get_config_mock.data_xml = '<data><vr><vrf>1</vrf></vr></data>'
             self.device.open()
             self.device.load_candidate_config(config='<config><vr><vrf>2</vrf></vr></config>')
-            expected = ['[vr]', '- <vrf>1</vrf>', '+ <vrf>2</vrf>']
+            expected = [
+                '[config]',
+                '  [vr]',
+                '-   <vrf>1</vrf>',
+                '+   <vrf>2</vrf>']
             self.assertEqual('{}'.format(os.linesep).join(expected), self.device.compare_config())
 
     def test_success_get_config_for_startup(self):

@@ -27,8 +27,8 @@ def test_build_diff_tree_empty_reference_tree():
     tree_left = normalize_tree('<data></data>')
     tree_right = normalize_tree("""
         <data>
-          <foo>100</foo>
-          <bar><bar_>200</bar_></bar>
+          <foo ref_path="/data">100</foo>
+          <bar ref_path="/data"><bar_>200</bar_></bar>
         </data>
     """)
     diffs = {
@@ -43,6 +43,7 @@ def test_build_diff_tree_empty_reference_tree():
     </data>
     """)
 
+    print(etree.tostring(build_diff_tree(tree_left, diffs), pretty_print=True))
     assert etree.tostring(build_diff_tree(tree_left, diffs)) == expected
 
 
@@ -80,9 +81,9 @@ def test_build_diff_tree_removal_and_update():
     """)
     tree_right = normalize_tree("""
         <data>
-          <bar>20</bar>
+          <bar ref_path="/data">20</bar>
           <loo>
-            <dob>30</dob>
+            <dob ref_path="/data/loo">30</dob>
             <roh>500</roh>
           </loo>
           <kib>600</kib>
@@ -127,14 +128,14 @@ def test_build_diff_tree_addition():
     """)
     tree_right = normalize_tree("""
         <data>
-        <foo>100</foo>
-        <bar>200</bar>
-        <loo>
-          <lat>500</lat>
-          <dob>300</dob>
-          <lat>400</lat>
-        </loo>
-    </data>
+          <foo>100</foo>
+          <bar ref_path="/data">200</bar>
+          <loo>
+            <lat ref_path="/data/loo">500</lat>
+            <dob>300</dob>
+            <lat>400</lat>
+          </loo>
+        </data>
     """)
     diffs = {
         REMOVED: [],
@@ -172,7 +173,7 @@ def test_build_diff_tree_change_in_same_tag():
     """)
     tree_right = normalize_tree("""
         <data>
-          <foo>
+          <foo ref_path="/data">
             <bar>20</bar>
           </foo>
         </data>
@@ -211,12 +212,12 @@ def test_build_diff_tree_change_about_identical_elements():
     """)
     tree_right = normalize_tree("""
         <data>
+          <foo ref_path="/data">
+            <bar>200</bar>
+          </foo>
           <foo>
             <bar>200</bar>
           </foo>
-            <foo>
-          <bar>200</bar>
-            </foo>
         </data>
     """)
     diffs = {

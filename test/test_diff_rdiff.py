@@ -3,7 +3,6 @@ This test module covers tests cases for function pyocnos.diff.rdiff()
 """
 # pylint: disable=invalid-name
 
-import pytest
 from lxml import etree
 from pyocnos.diff import HashElement, sha, rdiff, normalize_tree
 
@@ -19,8 +18,9 @@ def build_hashelement(xmlstring):
 def text_repr(diffs):
     """
     Helper function to dump xml elements into plain string form for the sake of comparison.
+    It also get rid of all attributes in xml elements if any.
     """
-    return {change_type:[etree.tostring(elem) for elem in elems]
+    return {change_type:[etree.tostring(elem.attrib.clear() or elem) for elem in elems]
             for change_type, elems in diffs.items()}
 
 
@@ -313,18 +313,21 @@ def test_rdiff_same_tag_different_content():
     Simple case: only one child element is involvde with no grandchildren elements.
     Sinario:
         set(left) - set(right) = 0
-        set(left) & set(right) = 3
+        set(left) & set(right) = 4
         set(right) - set(left) = 0
     Note, in the above pseudo code, set() describes an operation to get the collection of tags of all child elements
     with no duplication.
     """
     left_tree = """
         <data>
-          <foo>42</foo>
           <foo>
             <bar>1</bar>
             <doo>2</doo>
           </foo>
+          <foo>
+            <bar>1</bar>
+          </foo>
+          <foo>42</foo>
         </data>
     """
     right_tree = """
@@ -339,14 +342,15 @@ def test_rdiff_same_tag_different_content():
 
     expected = {
         'removed': [
-            '<foo>42</foo>',
-            '<foo><bar>1</bar><doo>2</doo></foo>'
+            '<doo>2</doo>',
+            '<foo><bar>1</bar></foo>',
+            '<foo>42</foo>'
         ],
         'added': [
-            '<foo><bar>1</bar><doo>20</doo><pub>3</pub></foo>'
+            '<doo>20</doo>',
+            '<pub>3</pub>'
         ]
     }
-
     assert text_repr(rdiff(build_hashelement(left_tree), build_hashelement(right_tree))) == expected
 
 

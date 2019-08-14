@@ -4,14 +4,14 @@ This test module covers tests cases for function pyocnos.diff.rrender()
 # pylint: disable=invalid-name
 
 import pytest
-from lxml import etree
-from pyocnos.diff import normalize_tree, rrender, ADDED, REMOVED
-
-
-
+from pyocnos.diff import normalize_tree, rrender
 
 
 def test_rrender_invalid_input():
+    """
+    A diff tree without children is an invlid case. It is to align with the fact this module
+    is to compare two xml tree rather than two simple element.
+    """
     tree_diff = normalize_tree("""
         <data change='removed'>100</data>
     """)
@@ -21,6 +21,9 @@ def test_rrender_invalid_input():
 
 
 def test_rrender_no_changes_at_all():
+    """
+    Scenario: Given a diff tree with no diff marked, the output is the collapsed version of the tree.
+    """
     tree_diff = normalize_tree("""
         <data>
           <foo>
@@ -62,8 +65,6 @@ def test_rrender_no_changes_at_all():
         </data>
     """)
 
-    print(rrender(tree_diff))
-
     assert rrender(tree_diff) == \
         [
             '[data]',
@@ -74,6 +75,10 @@ def test_rrender_no_changes_at_all():
 
 
 def test_rrender_multiple_changes():
+    """
+    Scenario: in a diff tree, an added element has + decorated in the front whilst
+    an removed element has - decorated. And unchanged elements are collapsed.
+    """
     tree_diff = normalize_tree("""
         <data>
             <foo>100</foo>

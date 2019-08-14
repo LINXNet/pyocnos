@@ -31,6 +31,7 @@ REMOVED = 'removed'
 # Data structure to pair an xml element and its hash.
 HashElement = namedtuple('HashElement', ['hash', 'elem'])
 
+
 def get_path(element):
     """
     Retrive the absolute xpath of the provided element.
@@ -43,6 +44,7 @@ def get_path(element):
     Returns: String e.g. '/vr/vrId[1]'
     """
     return element.getroottree().getpath(element)
+
 
 def get_parent_path(element):
     """
@@ -126,16 +128,22 @@ def intersection(hashelemes_left, hashelemes_right):
             tree_diff[ADDED].extend([x.elem for x in
                                      [x for x in hashelemes_right if x.hash == hash_][occurance_diff:]])
         else:
-            """
-            This, i.e. occurance_diff ==0, indicates an unchanged no children element, which is actually
-            the vast majority case.
-            """
+            # This, i.e. occurance_diff == 0, indicates an unchanged no children element, which is actually
+            # the vast majority case.
+            pass
+
     return tree_diff
 
 
 def complement_left(hashelemes_left, hashelemes_right):
     """
-    TBD
+    Collect elements that belongs to hashelement_left, but not hashelement_right.
+
+    Args:
+        hashelemes_left: [HashElement]
+        hashelemes_right: [HashElement]
+
+    Returns: [lxml.etree.Element]
     """
     return [x.elem for x in hashelemes_left
             if x.hash in ({x.hash for x in hashelemes_left} - {x.hash for x in hashelemes_right})]
@@ -143,7 +151,13 @@ def complement_left(hashelemes_left, hashelemes_right):
 
 def complement_right(hashelemes_left, hashelemes_right):
     """
-    TBD
+    Collect elements that belongs to hashelement_right, but not hashelement_left.
+
+    Args:
+        hashelemes_left: [HashElement]
+        hashelemes_right: [HashElement]
+
+    Returns: [lxml.etree.Element]
     """
     return [x.elem for x in hashelemes_right
             if x.hash in ({x.hash for x in hashelemes_right} - {x.hash for x in hashelemes_left})]
@@ -194,13 +208,40 @@ def normalize_tree(xmlstring):
     return tree
 
 
+def mark_ref_path(path, elems):
+    """
+    Set attribute to the value of path for all elements in elems.
+
+    Args:
+        path: string
+        elems: [lxml.etree.Element]
+
+    Returns: a new list with same content
+    """
+    return [elem.attrib.update({'ref_path': path}) or elem for elem in elems]
+
+
 def rdiff(hashelem_left, hashelem_right):
     """
-    TBD
+    Recursively create diff information between two elements provided in arguments.
+    It goes through each level of both xml trees, collects added or removed element, ignore same elements with soley
+    different order, and only goes into deeper layer if two elements share the same tag and have children.
+
+    Args:
+        hashelem_left: HashElement object
+        hashelem_right: HashElement object
+
+    Returns: a dictionary like this
+        {
+            'removed': [lxml.etree.Element],
+            'added': [lxml.etree.Element]
+        }
+
     """
     # Or right.values[0].tag, all elements have common tag anyway
     diffs = defaultdict(list)
-    # Let's override + so that it can easily extend the list below
+
+    ref_path = get_path(hashelem_left.elem)
 
     hashed_elements_left = [HashElement(sha(elem), elem) for elem in hashelem_left.elem]
     hashed_elements_right = [HashElement(sha(elem), elem) for elem in hashelem_right.elem]
@@ -208,49 +249,96 @@ def rdiff(hashelem_left, hashelem_right):
     for tag in ({elem.tag for elem in hashelem_left.elem} & {elem.tag for elem in hashelem_right.elem}):
         filtered_elems_left = [x for x in hashed_elements_left if x.elem.tag == tag]
         filtered_elems_right = [x for x in hashed_elements_right if x.elem.tag == tag]
-        if len(filtered_elems_left) == 1 and len(filtered_elems_right) == 1:
-            if has_children(filtered_elems_left[0].elem) and has_children(filtered_elems_right[0].elem):
-                deeper_diff = rdiff(filtered_elems_left[0], filtered_elems_right[0])
+        for hashelem_l, hashelem_r in zip(filtered_elems_left, filtered_elems_right):
+            if has_children(hashelem_l.elem) and has_children(hashelem_r.elem):
+                deeper_diff = rdiff(hashelem_l, hashelem_r)
                 diffs[REMOVED].extend(deeper_diff[REMOVED])
                 diffs[ADDED].extend(deeper_diff[ADDED])
-                hashed_elements_left.remove(filtered_elems_left[0])
-                hashed_elements_right.remove(filtered_elems_right[0])
+                hashed_elements_left.remove(hashelem_l)
+                hashed_elements_right.remove(hashelem_r)
+        # if len(filtered_elems_left) == 1 and len(filtered_elems_right) == 1:
+        #     if has_children(filtered_elems_left[0].elem) and has_children(filtered_elems_right[0].elem):
+        #         deeper_diff = rdiff(filtered_elems_left[0], filtered_elems_right[0])
+        #         diffs[REMOVED].extend(deeper_diff[REMOVED])
+        #         diffs[ADDED].extend(deeper_diff[ADDED])
+        #         hashed_elements_left.remove(filtered_elems_left[0])
+        #         hashed_elements_right.remove(filtered_elems_right[0])
 
     diffs[REMOVED].extend(complement_left(hashed_elements_left, hashed_elements_right))
-    diffs[ADDED].extend(complement_right(hashed_elements_left, hashed_elements_right))
+    diffs[ADDED].extend(mark_ref_path(ref_path, complement_right(hashed_elements_left, hashed_elements_right)))
     inter_diff = intersection(hashed_elements_left, hashed_elements_right)
     diffs[REMOVED].extend(inter_diff[REMOVED])
-    diffs[ADDED].extend(inter_diff[ADDED])
+    diffs[ADDED].extend(mark_ref_path(ref_path, inter_diff[ADDED]))
 
     return diffs
 
 
 def build_diff_tree(tree_ref, diffs):
     """
-    TBD
+    Create a xml tree using provided diff information based on a reference xml tree.
+    The tree_ref is generally the left tree to compare with.
+
+    Args:
+        tree_ref: lxml.etree.Element
+        diffs: a dictionary like this
+            {
+                'removed': [lxml.etree.Element],
+                'added': [lxml.etree.Element]
+            }
+
+    Returns: lxml.etree.element
     """
     tree_diff = deepcopy(tree_ref)
     for elem in diffs[REMOVED]:
         tree_diff.xpath(get_path(elem))[0].set('change', REMOVED)
 
     for elem in diffs[ADDED]:
-        found = tree_diff.xpath(get_path(elem))
+        ref_path = elem.attrib.pop('ref_path')
+        found = tree_diff.xpath('{}/{}'.format(ref_path, elem.tag))
         added_elem = deepcopy(elem)
         added_elem.set('change', ADDED)
+        elem.set('ref_path', ref_path)
         if found:
             found[-1].addnext(added_elem)
         else:
-            tree_diff.xpath(get_parent_path(elem))[0].append(added_elem)
+            tree_diff.xpath(ref_path)[0].append(added_elem)
 
     return tree_diff
 
 
 def rrender(tree_diff, indent_initial=0):
-    
+    """
+    Recursively render a provided diff xml tree with a given indent.
+    The tree_diff contains information about which element is an added one or removed one, which will be renderd with
+    + or - symbol in front with proper indent to have a pretty output.
+
+    Args:
+        tree_diff: lxml.etree.Element
+        indent_initial: how many white spaces for indention to render this tree
+
+    Returns: a string representation of the diff tree
+    """
     def collaps_factory(indent):
+        """
+        This internal function maintains a list of unchanged elements before a change is hit.
+        When this function is called, it provides two function to access this list, one to add element in and one to
+        render the list into a collapsed form before it reset the list.
+
+        Args:
+            indent: number of white spaces as indention for all unchanged elements
+
+        Returns:
+            collapse: function to add an unchanged element
+            close_collaps: function to collapse the element list so far
+        """
         elems = []
 
         def close_collaps():
+            """
+            This function renders the element list in a collapsed form.
+
+            Returns: collapsed element list
+            """
             if len(elems) <= 2:
                 collapsed_elems = list(elems)
             else:
@@ -260,13 +348,20 @@ def rrender(tree_diff, indent_initial=0):
             return collapsed_elems
 
         def collapse(elem):
+            """
+            This function adds the provided element into the list inside the closure.
+
+            Args:
+                elem: lxml.etree.Element
+
+            Return: None
+            """
             if has_children(elem):
                 elems.append('{0}<{1}>...</{1}>'.format(' ' * indent, elem.tag))
             else:
                 elems.append('{}{}'.format(' '*indent, etree.tostring(elem).decode('utf-8')))
 
         return collapse, close_collaps
-    
 
     if not has_children(tree_diff):
         raise ValueError('A diff tree without any children is not supported.')
@@ -290,18 +385,24 @@ def rrender(tree_diff, indent_initial=0):
         elif has_changed_children(elem):
             result.extend(collapse_finish())
             result.extend(rrender(elem, indent_initial+2))
-            
+
         else:
             collaps_start(elem)
 
     result.extend(collapse_finish())
-    
+
     return result
 
 
 def build_xml_diff(xmlstring_left, xmlstring_right):
     """
-    TBD
+    Main entry of the module, which generates a string representation of the diff between two xml tree.
+
+    Args:
+        xmlstring_left: serialised xml
+        xmlstring_right: serialised xml
+
+    Returns: diff in string
     """
     tree_left, tree_right = (normalize_tree(xmlstring) for xmlstring in (xmlstring_left, xmlstring_right))
 
@@ -315,15 +416,13 @@ def build_xml_diff(xmlstring_left, xmlstring_right):
     hash_left = sha(tree_left)
     hash_right = sha(tree_right)
     if hash_left == hash_right:
-        print('These two xml are identical.')
-        return
+        return ''
 
     diffs = rdiff(HashElement(hash_left, tree_left), HashElement(hash_right, tree_right))
     # Two xml can be identical, even their hash are different, when they contain same elements with simply different
     # order. Stop here to void rrender rendering a tree identical as tree_left.
     if not diffs[REMOVED] and not diffs[ADDED]:
-        print('These two xml are identical.')
-        return
+        return ''
 
     tree_diff = build_diff_tree(tree_left, diffs)
     rendered_diffs = rrender(tree_diff)

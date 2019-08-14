@@ -30,13 +30,13 @@ def test_diff_mismatched_root_tag():
 
 def test_diff_identical_xml():
     """
-    When the compared xml are identical, the module should return None, and tell stdout this fact.
+    When the compared xml are identical, the module should return empty string, and tell stdout this fact.
     """
     # When two xml are exactly the same
-    assert build_xml_diff("<data><foo>100</foo></data>", "<data><foo>100</foo></data>") is None
+    assert not build_xml_diff("<data><foo>100</foo></data>", "<data><foo>100</foo></data>")
 
     # When two xml vary only about order
-    assert build_xml_diff("""
+    assert not build_xml_diff("""
             <data>
               <foo>100</foo>
               <bar>200</bar>
@@ -46,10 +46,10 @@ def test_diff_identical_xml():
               <bar>200</bar>
               <foo>100</foo>
             </data>
-        """) is None
+        """)
 
     # Same case as above with deeper childeren
-    assert build_xml_diff("""
+    assert not build_xml_diff("""
             <data>
             <foo>
               <col>100</col>
@@ -65,7 +65,7 @@ def test_diff_identical_xml():
                 <col>100</col>
               </foo>
             </data>
-        """) is None
+        """)
 
 
 def test_diff_duplicated_elements():
@@ -156,23 +156,17 @@ def test_diff_elems_in_same_name():
     expected = os.linesep.join([
         '[data]',
         '  <foo>100</foo>',
-        '- <foo>',
+        '  [foo]',
         '-   <loo>200</loo>',
-        '- </foo>',
-        '+ <foo>',
         '+   <loo>20</loo>',
-        '+ </foo>',
         '  [bar]',
         '    [lar]',
-        '-     <col>',
+        '      [col]',
         '-       <roh>400</roh>',
-        '-     </col>',
+        '+       <roh>600</roh>',
         '-     <col>',
         '-       <roh>500</roh>',
-        '-     </col>',
-        '+     <col>',
-        '+       <roh>600</roh>',
-        '+     </col>',
+        '-     </col>'
     ])
 
     assert build_xml_diff(xmlstring_left, xmlstring_right) == expected
@@ -256,6 +250,9 @@ def test_diff_child_tree_changes():
               <nil>400</nil>
             </mia>
           </gen>
+          <gen>
+            <haa>400</haa>
+          </gen>
         </data>
     """
     expected = os.linesep.join([
@@ -275,6 +272,9 @@ def test_diff_child_tree_changes():
         '+     <nil>400</nil>',
         '+   </mia>',
         # Any added element is put at the tail of the diff.
+        '+ <gen>',
+        '+   <haa>400</haa>',
+        '+ </gen>',
         '+ <kal>',
         '+   <lol>100</lol>',
         '+ </kal>'
