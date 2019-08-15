@@ -33,7 +33,7 @@ def test_normalize_tree():
     assert tree_raw[3].text == '\n            '
 
     tree_normalised = normalize_tree(string)
-    assert etree.tostring(tree_normalised) == \
+    assert etree.tostring(tree_normalised).decode('utf-8') == \
       '<data><snmp>foo</snmp><vr/><logginglevel><loggingmodule>bgp</loggingmodule></logginglevel><interface/></data>'
     assert tree_normalised.tag == 'data'
     assert tree_normalised[0].tag == 'snmp'

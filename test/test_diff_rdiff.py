@@ -20,7 +20,7 @@ def text_repr(diffs):
     Helper function to dump xml elements into plain string form for the sake of comparison.
     It also get rid of all attributes in xml elements if any.
     """
-    return {change_type:[etree.tostring(elem.attrib.clear() or elem) for elem in elems]
+    return {change_type:[etree.tostring(elem.attrib.clear() or elem).decode('utf-8') for elem in elems]
             for change_type, elems in diffs.items()}
 
 

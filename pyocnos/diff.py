@@ -32,6 +32,20 @@ REMOVED = 'removed'
 HashElement = namedtuple('HashElement', ['hash', 'elem'])
 
 
+def utf8(obj):
+    """
+    This helper function attempts to decode a string like object to utf-8 encoding.
+    For Python2 it just works.
+    For Python3 a string object does not have decode mehtod whilst a byte object does.
+    """
+    try:
+        value = obj.decode('utf-8')
+    except AttributeError:
+        value = obj
+
+    return value
+
+
 def get_path(element):
     """
     Retrive the absolute xpath of the provided element.
@@ -175,7 +189,6 @@ def normalize_tree(xmlstring):
      * Element value contains no invisible characters like new line
      * Element value converted to None in case of empty string
     """
-
     # Stripe off all default name spaces.
     xmlstring = re.sub(r'\sxmlns="[^"]+"', '', xmlstring)
 
@@ -404,7 +417,7 @@ def build_xml_diff(xmlstring_left, xmlstring_right):
 
     Returns: diff in string
     """
-    tree_left, tree_right = (normalize_tree(xmlstring) for xmlstring in (xmlstring_left, xmlstring_right))
+    tree_left, tree_right = (normalize_tree(xmlstring) for xmlstring in (utf8(xmlstring_left), utf8(xmlstring_right)))
 
     if tree_left.tag != tree_right.tag:
         raise ValueError('The root tags must be the same! '

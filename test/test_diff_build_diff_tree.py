@@ -17,7 +17,7 @@ def compact(xmlstring):
             elem.text = elem.text.strip() or None
         elem.tail = None
 
-    return etree.tostring(tree)
+    return etree.tostring(tree).decode('utf-8')
 
 
 def test_build_diff_tree_empty_reference_tree():
@@ -43,8 +43,7 @@ def test_build_diff_tree_empty_reference_tree():
     </data>
     """)
 
-    print(etree.tostring(build_diff_tree(tree_left, diffs), pretty_print=True))
-    assert etree.tostring(build_diff_tree(tree_left, diffs)) == expected
+    assert etree.tostring(build_diff_tree(tree_left, diffs)).decode('utf-8') == expected
 
 
 def test_build_diff_tree_empty_diff():
@@ -59,7 +58,7 @@ def test_build_diff_tree_empty_diff():
 
     expected = '<data><foo>100</foo></data>'
 
-    assert etree.tostring(build_diff_tree(tree_left, diffs)) == expected
+    assert etree.tostring(build_diff_tree(tree_left, diffs)).decode('utf-8') == expected
 
 
 def test_build_diff_tree_removal_and_update():
@@ -110,7 +109,7 @@ def test_build_diff_tree_removal_and_update():
         </data>
     """)
 
-    assert etree.tostring(build_diff_tree(tree_left, diffs)) == expected
+    assert etree.tostring(build_diff_tree(tree_left, diffs)).decode('utf-8') == expected
 
 
 def test_build_diff_tree_addition():
@@ -154,7 +153,7 @@ def test_build_diff_tree_addition():
     </data>
     """)
 
-    assert etree.tostring(build_diff_tree(tree_left, diffs)) == expected
+    assert etree.tostring(build_diff_tree(tree_left, diffs)).decode('utf-8') == expected
 
 
 def test_build_diff_tree_change_in_same_tag():
@@ -195,7 +194,7 @@ def test_build_diff_tree_change_in_same_tag():
         </data>
     """)
 
-    assert etree.tostring(build_diff_tree(tree_left, diffs)) == expected
+    assert etree.tostring(build_diff_tree(tree_left, diffs)).decode('utf-8') == expected
 
 
 def test_build_diff_tree_change_about_identical_elements():
@@ -236,4 +235,4 @@ def test_build_diff_tree_change_about_identical_elements():
         </data>
     """)
 
-    assert etree.tostring(build_diff_tree(tree_left, diffs)) == expected
+    assert etree.tostring(build_diff_tree(tree_left, diffs)).decode('utf-8') == expected

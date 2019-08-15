@@ -312,7 +312,8 @@ class OCNOS(object):
             self.log.error('Error: no open connection', exc_info=True)
             raise OCNOSUnOpenedConnectionError
 
-        return build_xml_diff(self._get_config_from_device('running'), lxml.etree.tostring(self._candidate_config))
+        return build_xml_diff(self._get_config_from_device('running'),
+                              lxml.etree.tostring(self._candidate_config, encoding='UTF-8'))
 
     def _get_config_from_device(self, config_name):
         """
