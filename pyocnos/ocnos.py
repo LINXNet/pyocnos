@@ -13,7 +13,7 @@ from ncclient import NCClientError
 from ncclient import manager
 import paramiko
 
-from pyocnos.diff.xml_diff import XmlDiff
+from pyocnos.diff import build_xml_diff
 from pyocnos.input import query_yes_no
 from pyocnos.exceptions import OCNOSCandidateConfigInvalidError
 from pyocnos.exceptions import OCNOSCandidateConfigNotInServerCapabilitiesError
@@ -312,8 +312,8 @@ class OCNOS(object):
             self.log.error('Error: no open connection', exc_info=True)
             raise OCNOSUnOpenedConnectionError
 
-        xml_diff = XmlDiff(self._get_config_from_device('running'), lxml.etree.tostring(self._candidate_config))
-        return xml_diff.get_diff_string()
+        return build_xml_diff(self._get_config_from_device('running'),
+                              lxml.etree.tostring(self._candidate_config, encoding='UTF-8'))
 
     def _get_config_from_device(self, config_name):
         """
