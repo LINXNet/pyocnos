@@ -3,4 +3,4 @@ future
 lxml
 pyYAML
 paramiko
-cryptography==2.4.2
+cryptography
