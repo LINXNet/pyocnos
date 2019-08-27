@@ -182,7 +182,7 @@ class TestOCNOS(unittest.TestCase):
         instance.edit_config.assert_called_once_with(
             config=self.device._candidate_config,
             target='candidate',
-            test_option='test-then-set',
+            error_option='rollback-on-error',
             default_operation='merge'
         )
         instance.commit.assert_called_once_with()
@@ -208,7 +208,7 @@ class TestOCNOS(unittest.TestCase):
         instance.edit_config.assert_called_once_with(
             config=self.device._candidate_config,
             target='candidate',
-            test_option='test-then-set',
+            error_option='rollback-on-error',
             default_operation='replace'
         )
         instance.commit.assert_called_once_with()

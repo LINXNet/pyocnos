@@ -21,7 +21,12 @@ class OCNOSConnectionError(OCNOSError):
     """
     Exception class when couldn't open a connection
     """
-    pass
+
+
+class OCNOSBasicModeError(OCNOSError):
+    """
+    Exception class when failed to set basic mode to trim
+    """
 
 
 class OCNOSUnableToRetrieveConfigError(OCNOSError):
