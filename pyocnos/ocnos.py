@@ -185,8 +185,8 @@ class OCNOS(object):
             rpc_elem = lxml.etree.fromstring(
                 b'<?xml version="1.0" encoding="UTF-8"?>'
                 b'<set-default-handling-basic-mode '
-                b'xmlns="http://ipinfusion.com/ns/zebmcli">'
-                b'trim</set-default-handling-basic-mode>'
+                b'xmlns="http://ipinfusion.com/ns/zebmcli"><mode>'
+                b'trim</mode></set-default-handling-basic-mode>'
             )
             self._connection.dispatch(rpc_elem)
         except NCClientError as ncclient_exception:
