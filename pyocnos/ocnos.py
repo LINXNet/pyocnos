@@ -23,6 +23,7 @@ from pyocnos.exceptions import OCNOSLoadCandidateConfigFileReadError
 from pyocnos.exceptions import OCNOSNoCandidateConfigError
 from pyocnos.exceptions import OCNOSUnOpenedConnectionError
 from pyocnos.exceptions import OCNOSUnableToRetrieveConfigError
+from pyocnos.exceptions import OCNOSBasicModeError
 
 
 class PromptPolicy(paramiko.MissingHostKeyPolicy):
@@ -179,6 +180,26 @@ class OCNOS(object):
                 self.username
             )
 
+        try:
+            # Set basic mode to trim
+            rpc_elem = lxml.etree.fromstring(
+                b'<?xml version="1.0" encoding="UTF-8"?>'
+                b'<set-default-handling-basic-mode '
+                b'xmlns="http://ipinfusion.com/ns/zebmcli"><mode>'
+                b'trim</mode></set-default-handling-basic-mode>'
+            )
+            self._connection.dispatch(rpc_elem)
+        except NCClientError as ncclient_exception:
+            self.log.error('Error', exc_info=True)
+            raise_from(
+                OCNOSBasicModeError('Unable to set basic mode to trim.'),
+                ncclient_exception
+            )
+        else:
+            self.log.info(
+                "Successfully set-default-handling-basic-mode to trim."
+            )
+
     def close(self):
         """
         Close the SSH connection to the OcNOS running device.
@@ -278,13 +299,13 @@ class OCNOS(object):
             self.log.info('Merge Candidate config with Running config')
             default_operation = 'merge'
 
-        self._connection.discard_changes()
         with self._connection.locked(target='candidate'):
+            self._connection.discard_changes()
             try:
                 self._connection.edit_config(
                     target='candidate',
                     config=self._candidate_config,
-                    test_option='test-then-set',
+                    error_option='rollback-on-error',
                     default_operation=default_operation
                 )
                 self._connection.commit()
