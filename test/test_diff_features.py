@@ -35,7 +35,6 @@ def test_diff_identical_xml():
     # When two xml are exactly the same
     assert not build_xml_diff("<data><foo>100</foo></data>", "<data><foo>100</foo></data>")
 
-    # When two xml vary only about order
     assert not build_xml_diff("""
             <data>
               <foo>100</foo>
@@ -43,29 +42,77 @@ def test_diff_identical_xml():
             </data>
         """, """
             <data>
-              <bar>200</bar>
               <foo>100</foo>
+              <bar>200</bar>
             </data>
         """)
 
     # Same case as above with deeper childeren
     assert not build_xml_diff("""
-            <data>
+          <data>
             <foo>
               <col>100</col>
               <loh>200</loh>
             </foo>
             <bar>300</bar>
+          </data>
+        """, """
+          <data>
+            <foo>
+              <col>100</col>
+              <loh>200</loh>
+            </foo>
+            <bar>300</bar>
+          </data>
+        """)
+
+
+def test_diff_reordered_xml():
+    """
+    When the compared xml are identical, the module should return empty string, and tell stdout this fact.
+    """
+    # When two xml vary only about order
+
+    assert build_xml_diff("""
+            <data>
+              <foo>100</foo>
+              <bar>200</bar>
             </data>
+        """, """
+            <data>
+              <bar>200</bar>
+              <foo>100</foo>
+            </data>
+        """) == os.linesep.join([
+            '[data]',
+            '! <foo>100</foo>',
+            '! <bar>200</bar>',
+        ])
+
+
+    assert build_xml_diff("""
+          <data>
+            <foo>
+              <loh>200</loh>
+              <col>100</col>
+            </foo>
+            <bar>300</bar>
+          </data>
         """, """
             <data>
               <bar>300</bar>
               <foo>
-                <loh>200</loh>
                 <col>100</col>
+                <loh>200</loh>
               </foo>
             </data>
-        """)
+        """) == os.linesep.join([
+            '[data]',
+            '  [foo]',
+            '!   <loh>200</loh>',
+            '!   <col>100</col>',
+            '! <bar>300</bar>',
+        ])
 
 
 def test_diff_duplicated_elements():
@@ -99,8 +146,8 @@ def test_diff_duplicated_elements():
     # It is designed to treat the first duplicated element as the removed one.
     expected = os.linesep.join([
         '[data]',
-        '- <foo>100</foo>',
         '  <foo>100</foo>',
+        '- <foo>100</foo>',
         '  [bar]',
         '    [lar]',
         '      <col>200</col>',
@@ -265,7 +312,7 @@ def test_diff_child_tree_changes():
         '-     <eol>',
         '-       <fen>200</fen>',
         '-     </eol>',
-        '      <elk>500</elk>',
+        '!     <elk>500</elk>',
         '  [gen]',
         '    <haa>300</haa>',
         '+   <mia>',
@@ -358,5 +405,3 @@ def test_diff_collapse_same_elements_among_diff():
     ])
 
     assert build_xml_diff(xmlstring_left, xmlstring_right) == expected
-            
-

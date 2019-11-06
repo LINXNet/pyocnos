@@ -46,7 +46,8 @@ def test_rdiff_root_tag_mismatch():
 
     expected = {
         'removed': [],
-        'added': []
+        'added': [],
+        'moved': [],
     }
 
     assert text_repr(rdiff(build_hashelement(left_tree), build_hashelement(right_tree))) == expected
@@ -70,7 +71,8 @@ def test_rdiff_neither_with_children():
 
     expected = {
         'removed': [],
-        'added': []
+        'added': [],
+        'moved': [],
     }
 
     assert text_repr(rdiff(build_hashelement(left_tree), build_hashelement(right_tree))) == expected
@@ -97,7 +99,8 @@ def test_rdiff_simple_left_complement_only():
 
     expected = {
         'removed': ['<foo>42</foo>'],
-        'added': []
+        'added': [],
+        'moved': [],
     }
 
     assert text_repr(rdiff(build_hashelement(left_tree), build_hashelement(right_tree))) == expected
@@ -124,7 +127,8 @@ def test_rdiff_simple_right_complement_only():
 
     expected = {
         'removed': [],
-        'added': ['<foo>42</foo>']
+        'added': ['<foo>42</foo>'],
+        'moved': [],
     }
 
     assert text_repr(rdiff(build_hashelement(left_tree), build_hashelement(right_tree))) == expected
@@ -153,7 +157,8 @@ def test_rdiff_simple_intersection_only_and_they_are_identical():
 
     expected = {
         'removed': [],
-        'added': []
+        'added': [],
+        'moved': [],
     }
 
     assert text_repr(rdiff(build_hashelement(left_tree), build_hashelement(right_tree))) == expected
@@ -188,7 +193,8 @@ def test_rdiff_simple_intersection_only_with_some_differences():
 
     expected = {
         'removed': ['<bar>1</bar>'],
-        'added': ['<bar>2</bar>']
+        'added': ['<bar>2</bar>'],
+        'moved': ['<roh>100</roh>'],
     }
 
     assert text_repr(rdiff(build_hashelement(left_tree), build_hashelement(right_tree))) == expected
@@ -217,7 +223,8 @@ def test_rdiff_simple_intersection_only_and_they_are_different():
 
     expected = {
         'removed': ['<foo>42</foo>'],
-        'added': ['<foo>47</foo>']
+        'added': ['<foo>47</foo>'],
+        'moved': [],
     }
 
     assert text_repr(rdiff(build_hashelement(left_tree), build_hashelement(right_tree))) == expected
@@ -303,7 +310,15 @@ def test_rdiff_unique_tags():
             '<R>13</R>',
             '<S>14</S>',
             '<T><U>15</U><V>16</V><W><W_>17</W_></W><X/></T>'
-        ]
+        ],
+        'moved': [
+            '<D><D_>4</D_></D>',
+            '<C>3</C>',
+            '<H>7</H>',
+            '<I><I_>8</I_></I>',
+            '<O>10</O>'
+
+        ],
     }
     assert text_repr(rdiff(build_hashelement(left_tree), build_hashelement(right_tree))) == expected
 
@@ -349,7 +364,8 @@ def test_rdiff_same_tag_different_content():
         'added': [
             '<doo>20</doo>',
             '<pub>3</pub>'
-        ]
+        ],
+        'moved': [],
     }
     assert text_repr(rdiff(build_hashelement(left_tree), build_hashelement(right_tree))) == expected
 
@@ -389,7 +405,8 @@ def test_rdiff_same_tag_same_content():
         'removed': [
             '<foo><bar>1</bar><doo>2</doo></foo>'
         ],
-        'added': []
+        'added': [],
+        'moved': [],
     }
 
     assert text_repr(rdiff(build_hashelement(left_tree), build_hashelement(right_tree))) == expected

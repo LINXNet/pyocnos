@@ -4,7 +4,7 @@ This test module covers tests cases for function pyocnos.diff.build_diff_tree()
 # pylint: disable=invalid-name
 
 from lxml import etree
-from pyocnos.diff import normalize_tree, build_diff_tree, ADDED, REMOVED
+from pyocnos.diff import normalize_tree, build_diff_tree, ADDED, MOVED, REMOVED
 
 
 def compact(xmlstring):
@@ -33,7 +33,8 @@ def test_build_diff_tree_empty_reference_tree():
     """)
     diffs = {
         REMOVED: [],
-        ADDED: list(tree_right)
+        ADDED: list(tree_right),
+        MOVED: [],
     }
 
     expected = compact("""
@@ -53,7 +54,8 @@ def test_build_diff_tree_empty_diff():
     tree_left = normalize_tree('<data><foo>100</foo></data>')
     diffs = {
         REMOVED: [],
-        ADDED: []
+        ADDED: [],
+        MOVED: [],
     }
 
     expected = '<data><foo>100</foo></data>'
@@ -91,7 +93,8 @@ def test_build_diff_tree_removal_and_update():
     diffs = {
         REMOVED: [tree_left.find('./foo'), tree_left.find('./bar'),
                   tree_left.find('./loo/dob'), tree_left.find('./loo/lat')],
-        ADDED: [tree_right.find('./bar'), tree_right.find('./loo/dob')]
+        ADDED: [tree_right.find('./bar'), tree_right.find('./loo/dob')],
+        MOVED: [],
     }
 
     expected = compact("""
@@ -138,7 +141,8 @@ def test_build_diff_tree_addition():
     """)
     diffs = {
         REMOVED: [],
-        ADDED: [tree_right.find('./bar'), tree_right.find('./loo/lat')]
+        ADDED: [tree_right.find('./bar'), tree_right.find('./loo/lat')],
+        MOVED: [],
     }
 
     expected = compact("""
@@ -179,7 +183,8 @@ def test_build_diff_tree_change_in_same_tag():
     """)
     diffs = {
         REMOVED: list(tree_left),
-        ADDED: list(tree_right)
+        ADDED: list(tree_right),
+        MOVED: [],
     }
 
     expected = compact("""
@@ -200,7 +205,7 @@ def test_build_diff_tree_change_in_same_tag():
 def test_build_diff_tree_change_about_identical_elements():
     """
     Scenario: when there are some diff between identical elements, the diff is simply calculated by which side contains
-    more. 
+    more.
     """
     tree_left = normalize_tree("""
         <data>
@@ -221,7 +226,8 @@ def test_build_diff_tree_change_about_identical_elements():
     """)
     diffs = {
         REMOVED: [],
-        ADDED: [tree_right.find('./foo')]
+        ADDED: [tree_right.find('./foo')],
+        MOVED: [],
     }
 
     expected = compact("""
