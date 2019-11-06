@@ -15,11 +15,13 @@ Usage:
 """
 
 from __future__ import print_function
+
+from collections import defaultdict, namedtuple
+from copy import deepcopy
 import hashlib
 import os
 import re
-from collections import defaultdict, namedtuple
-from copy import deepcopy
+
 from lxml import etree
 
 # Two supported change types are declared here.
@@ -258,8 +260,6 @@ def rdiff(hashelem_left, hashelem_right):
     # Or right.values[0].tag, all elements have common tag anyway
     diffs = defaultdict(list)
 
-    ref_path = get_path(hashelem_left.elem)
-
     hashed_elements_left = [HashElement(sha(elem), elem) for elem in hashelem_left.elem]
     hashed_elements_right = [HashElement(sha(elem), elem) for elem in hashelem_right.elem]
 
@@ -288,7 +288,8 @@ def rdiff(hashelem_left, hashelem_right):
 
     # Remaining elements
     diffs[REMOVED].extend(complement(hashed_elements_left, hashed_elements_right))
-    diffs[ADDED].extend(mark_ref_path(ref_path, complement(hashed_elements_right, hashed_elements_left)))
+    diffs[ADDED].extend(mark_ref_path(get_path(hashelem_left.elem),
+                                      complement(hashed_elements_right, hashed_elements_left)))
 
     return diffs
 
