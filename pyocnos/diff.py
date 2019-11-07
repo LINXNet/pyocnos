@@ -161,30 +161,32 @@ def ordering_intersection(hashelements_left, hashelements_right):
     return tree_diff
 
 
-def complement(hashelements_a, hashelements_b):
+def complement_left(hashelemes_left, hashelemes_right):
     """
-    Does relative complement operation A \\ B with two lists. It returns
-    elements that belongs to hashelements_a, but not to hashelements_b.
-    If the lists contain duplicates the result contains only the difference in
-    counts of the element in both lists.
-
-    Example: complement([A,A,B,C], [D,A,B]) == [A,C]
+    Collect elements that belongs to hashelement_left, but not hashelement_right.
 
     Args:
-        hashelements_a: [HashElement]
-        hashelements_b: [HashElement]
+        hashelemes_left: [HashElement]
+        hashelemes_right: [HashElement]
 
     Returns: [lxml.etree.Element]
     """
-    hashelements_old = deepcopy(hashelements_b)
-    result = []
-    for hashelem in hashelements_a:
-        if hashelem in hashelements_old:
-            hashelements_old.remove(hashelem)
-        else:
-            result.append(hashelem.elem)
+    return [x.elem for x in hashelemes_left
+            if x.hash in ({x.hash for x in hashelemes_left} - {x.hash for x in hashelemes_right})]
 
-    return result
+
+def complement_right(hashelemes_left, hashelemes_right):
+    """
+    Collect elements that belongs to hashelement_right, but not hashelement_left.
+
+    Args:
+        hashelemes_left: [HashElement]
+        hashelemes_right: [HashElement]
+
+    Returns: [lxml.etree.Element]
+    """
+    return [x.elem for x in hashelemes_right
+            if x.hash in ({x.hash for x in hashelemes_right} - {x.hash for x in hashelemes_left})]
 
 
 def normalize_tree(xmlstring):
@@ -292,9 +294,9 @@ def rdiff(hashelem_left, hashelem_right):
                 hashed_elements_right.remove(hashelem_r)
 
     # Remaining elements
-    diffs[REMOVED].extend(complement(hashed_elements_left, hashed_elements_right))
+    diffs[REMOVED].extend(complement_left(hashed_elements_left, hashed_elements_right))
     diffs[ADDED].extend(mark_ref_path(get_path(hashelem_left.elem),
-                                      complement(hashed_elements_right, hashed_elements_left)))
+                                      complement_right(hashed_elements_left, hashed_elements_right)))
 
     return diffs
 
