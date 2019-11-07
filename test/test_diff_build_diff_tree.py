@@ -160,6 +160,56 @@ def test_build_diff_tree_addition():
     assert etree.tostring(build_diff_tree(tree_left, diffs)).decode('utf-8') == expected
 
 
+def test_build_diff_tree_moved():
+    """
+    Scenario: all added elements will be put at a tail position in the reference tree since there is no better position
+    """
+    tree_left = normalize_tree("""
+        <data>
+            <foo>100</foo>
+            <lat>100</lat>
+            <loo>
+              <dob>300</dob>
+              <lat>400</lat>
+            </loo>
+        </data>
+    """)
+    tree_right = normalize_tree("""
+        <data>
+          <foo>100</foo>
+          <bar ref_path="/data">200</bar>
+          <lat>100</lat>
+          <loo>
+            <lat ref_path="/data/loo">500</lat>
+            <lat>400</lat>
+            <dob ref_path="/data/loo">200</dob>
+            <dob>300</dob>
+          </loo>
+        </data>
+    """)
+    diffs = {
+        REMOVED: [],
+        ADDED: [tree_right.find('./bar'), tree_right.find('./loo/lat'), tree_right.find('./loo/dob')],
+        MOVED: [tree_right.find('./lat'), tree_right.find('./loo/dob[1]')],
+    }
+
+    expected = compact("""
+        <data>
+        <foo>100</foo>
+        <lat change='moved'>100</lat>
+        <loo>
+          <dob change='moved'>300</dob>
+          <dob change='added'>200</dob>
+          <lat>400</lat>
+          <lat change='added'>500</lat>
+        </loo>
+        <bar change='added'>200</bar>
+    </data>
+    """)
+
+    assert etree.tostring(build_diff_tree(tree_left, diffs)).decode('utf-8') == expected
+
+
 def test_build_diff_tree_change_in_same_tag():
     """
     Scenario: When there are some diff between elements with the same tag, the comparison does not go deeper into any

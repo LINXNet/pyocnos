@@ -31,6 +31,7 @@ ADDED = 'added'
 MOVED = 'moved'
 REMOVED = 'removed'
 SAME = 'same'
+DIFF_SYMBOLS = {MOVED: '!', ADDED: '+', REMOVED: '-'}
 
 # Data structure to pair an xml element and its hash.
 HashElement = namedtuple('HashElement', ['hash', 'elem'])
@@ -141,8 +142,8 @@ def ordering_intersection(hashelements_left, hashelements_right):
     hashes_left = [hashelem.hash for hashelem in hashelements_left]
     hashes_right = [hashelem.hash for hashelem in hashelements_right]
 
-    same_hashes = set(hashes_left) & set(hashes_right)
-    for hash_ in sorted(same_hashes):
+    common_hashes = set(hashes_left) & set(hashes_right)
+    for hash_ in sorted(common_hashes):
         left_indexes = {i for i, elem in enumerate(hashelements_left) if elem.hash == hash_}
         right_indexes = {i for i, elem in enumerate(hashelements_right) if elem.hash == hash_}
         same_indexes = left_indexes & right_indexes
@@ -162,8 +163,12 @@ def ordering_intersection(hashelements_left, hashelements_right):
 
 def complement(hashelements_a, hashelements_b):
     """
-    Collects elements that belongs to hashelements_a, but not hashelements_b
-    (respecting the counts of same elements in both lists).
+    Does relative complement operation A \\ B with two lists. It returns
+    elements that belongs to hashelements_a, but not to hashelements_b.
+    If the lists contain duplicates the result contains only the difference in
+    counts of the element in both lists.
+
+    Example: complement([A,A,B,C], [D,A,B]) == [A,C]
 
     Args:
         hashelements_a: [HashElement]
@@ -397,7 +402,7 @@ def rrender(tree_diff, indent_initial=0):
             result.extend(collapse_finish())
 
             change_type = elem.attrib.pop('change')
-            symbol = {MOVED: '!', ADDED: '+', REMOVED: '-'}[change_type]
+            symbol = DIFF_SYMBOLS[change_type]
 
             xml_string_list = etree.tostring(elem, pretty_print=True) \
                                    .decode('utf-8')                   \
@@ -443,11 +448,6 @@ def build_xml_diff(xmlstring_left, xmlstring_right):
         return ''
 
     diffs = rdiff(HashElement(hash_left, tree_left), HashElement(hash_right, tree_right))
-    # Two xml can be identical, even their hash are different, when they contain same elements with simply different
-    # order. Stop here to void rrender rendering a tree identical as tree_left.
-    if all(not diffs[type] for type in [ADDED, MOVED, REMOVED]):
-        return ''
-
     tree_diff = build_diff_tree(tree_left, diffs)
     rendered_diffs = rrender(tree_diff)
 

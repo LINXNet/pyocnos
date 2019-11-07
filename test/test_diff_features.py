@@ -35,18 +35,6 @@ def test_diff_identical_xml():
     # When two xml are exactly the same
     assert not build_xml_diff("<data><foo>100</foo></data>", "<data><foo>100</foo></data>")
 
-    assert not build_xml_diff("""
-            <data>
-              <foo>100</foo>
-              <bar>200</bar>
-            </data>
-        """, """
-            <data>
-              <foo>100</foo>
-              <bar>200</bar>
-            </data>
-        """)
-
     # Same case as above with deeper childeren
     assert not build_xml_diff("""
           <data>
@@ -325,6 +313,46 @@ def test_diff_child_tree_changes():
         '+ <kal>',
         '+   <lol>100</lol>',
         '+ </kal>'
+    ])
+
+    assert build_xml_diff(xmlstring_left, xmlstring_right) == expected
+
+
+def test_diff_same_tag_move_addition():
+    """
+    Test situation when a tag was moved and a tag with the same name was added.
+    """
+    xmlstring_left = """
+        <data>
+            <foo>100</foo>
+            <lat>100</lat>
+            <loo>
+              <dob>300</dob>
+              <lat>400</lat>
+            </loo>
+        </data>
+    """
+    xmlstring_right = """
+        <data>
+          <foo>100</foo>
+          <bar>200</bar>
+          <lat>100</lat>
+          <loo>
+            <dob>200</dob>
+            <lat>400</lat>
+            <dob>300</dob>
+          </loo>
+        </data>
+    """
+    expected = os.linesep.join([
+        '[data]',
+        '  <foo>100</foo>',
+        '! <lat>100</lat>',
+        '  [loo]',
+        '!   <dob>300</dob>',
+        '+   <dob>200</dob>',
+        '    <lat>400</lat>',
+        '+ <bar>200</bar>',
     ])
 
     assert build_xml_diff(xmlstring_left, xmlstring_right) == expected
