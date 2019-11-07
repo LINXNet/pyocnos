@@ -65,24 +65,6 @@ def get_path(element):
     return element.getroottree().getpath(element)
 
 
-def get_parent_path(element):
-    """
-    Retrive the absolute xpath of the parent of the provided element.
-    e.g. <vr><vrId>1</vrId><vrId>2</vrId></vr> as the whole tree,
-    for element <vrId>1</vrId>, the path to its parent should be '/vr'.
-
-    Args:
-       element: lxml.etree.Element
-
-    Returns: String e.g. '/vr/vrId[1]'
-    """
-    parent_elem = element.getparent()
-    if parent_elem is None:
-        raise ValueError('Root element does not have a parent!')
-
-    return element.getroottree().getpath(parent_elem)
-
-
 def sha(tree):
     """
     Generate a hash to a xml tree from its string presentation.
