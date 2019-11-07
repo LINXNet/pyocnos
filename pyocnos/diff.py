@@ -24,9 +24,8 @@ import re
 
 from lxml import etree
 
-# Two supported change types are declared here.
-# It indicates this module treats all sorts of xml element based changes are either an addition or removal.
-# Same elements with simply different location at the same level are not counted as a difference.
+# Four supported change types are declared here.
+# It indicates this module treats all sorts of xml element based changes are either an added, moved or removed.
 ADDED = 'added'
 MOVED = 'moved'
 REMOVED = 'removed'
