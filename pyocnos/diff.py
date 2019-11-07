@@ -129,46 +129,14 @@ def ordering_intersection(hashelements_left, hashelements_right):
         left_indexes = {i for i, elem in enumerate(hashelements_left) if elem.hash == hash_}
         right_indexes = {i for i, elem in enumerate(hashelements_right) if elem.hash == hash_}
         same_indexes = left_indexes & right_indexes
-        moved_elems = []
-        for i in left_indexes:
-            elem = hashelements_left[i]
-            if i in same_indexes:
-                tree_diff[SAME].append(elem)
-            elif (len(moved_elems) + len(same_indexes) <
-                  min(len(right_indexes), len(left_indexes))):
-                moved_elems.append(elem)
-
-        tree_diff[MOVED].extend(moved_elems)
+        potential_moved_indexes = left_indexes - right_indexes
+        tree_diff[SAME].extend(hashelements_left[i] for i in same_indexes)
+        # number of (moved elements + same elements) can't be more than
+        # number of those elements is in the right list
+        moved_count = min(len(left_indexes), len(right_indexes)) - len(same_indexes)
+        tree_diff[MOVED].extend(hashelements_left[i] for i in list(potential_moved_indexes)[:moved_count])
 
     return tree_diff
-
-
-def complement_left(hashelemes_left, hashelemes_right):
-    """
-    Collect elements that belongs to hashelement_left, but not hashelement_right.
-
-    Args:
-        hashelemes_left: [HashElement]
-        hashelemes_right: [HashElement]
-
-    Returns: [lxml.etree.Element]
-    """
-    return [x.elem for x in hashelemes_left
-            if x.hash in ({x.hash for x in hashelemes_left} - {x.hash for x in hashelemes_right})]
-
-
-def complement_right(hashelemes_left, hashelemes_right):
-    """
-    Collect elements that belongs to hashelement_right, but not hashelement_left.
-
-    Args:
-        hashelemes_left: [HashElement]
-        hashelemes_right: [HashElement]
-
-    Returns: [lxml.etree.Element]
-    """
-    return [x.elem for x in hashelemes_right
-            if x.hash in ({x.hash for x in hashelemes_right} - {x.hash for x in hashelemes_left})]
 
 
 def normalize_tree(xmlstring):
@@ -276,9 +244,9 @@ def rdiff(hashelem_left, hashelem_right):
                 hashed_elements_right.remove(hashelem_r)
 
     # Remaining elements
-    diffs[REMOVED].extend(complement_left(hashed_elements_left, hashed_elements_right))
+    diffs[REMOVED].extend(hashelem.elem for hashelem in hashed_elements_left)
     diffs[ADDED].extend(mark_ref_path(get_path(hashelem_left.elem),
-                                      complement_right(hashed_elements_left, hashed_elements_right)))
+                                      [hashelem.elem for hashelem in hashed_elements_right]))
 
     return diffs
 
