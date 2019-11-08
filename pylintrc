@@ -37,7 +37,7 @@ extension-pkg-whitelist=lxml
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
-disable=interface-not-implemented,RP0401
+disable=interface-not-implemented,RP0401,fixme,useless-object-inheritance,no-else-raise
 
 
 [REPORTS]
