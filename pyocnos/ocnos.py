@@ -1,29 +1,29 @@
 """
 Class to communicate with devices running OcNOS operating system
 """
+from binascii import hexlify
 import logging
+import os
 # todo: Remove this once Ipinfusion have fix issue on as5812 switches for timeout
 from time import sleep
-import os
-from binascii import hexlify
 
-import lxml
 from future.utils import raise_from
-from ncclient import NCClientError
+import lxml
 from ncclient import manager
+from ncclient import NCClientError
 import paramiko
 
 from pyocnos.diff import build_xml_diff
-from pyocnos.input import query_yes_no
+from pyocnos.exceptions import OCNOSBasicModeError
 from pyocnos.exceptions import OCNOSCandidateConfigInvalidError
 from pyocnos.exceptions import OCNOSCandidateConfigNotInServerCapabilitiesError
 from pyocnos.exceptions import OCNOSCandidateConfigNotLoadedError
 from pyocnos.exceptions import OCNOSConnectionError
 from pyocnos.exceptions import OCNOSLoadCandidateConfigFileReadError
 from pyocnos.exceptions import OCNOSNoCandidateConfigError
-from pyocnos.exceptions import OCNOSUnOpenedConnectionError
 from pyocnos.exceptions import OCNOSUnableToRetrieveConfigError
-from pyocnos.exceptions import OCNOSBasicModeError
+from pyocnos.exceptions import OCNOSUnOpenedConnectionError
+from pyocnos.input import query_yes_no
 
 
 class PromptPolicy(paramiko.MissingHostKeyPolicy):

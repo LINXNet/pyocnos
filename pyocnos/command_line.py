@@ -2,11 +2,12 @@
 Command to expose pyocnos functionality
 """
 from __future__ import print_function
+
 import argparse
 import io
-import textwrap
 import logging
 import sys
+import textwrap
 
 import yaml
 

@@ -4,7 +4,6 @@
 
 class OCNOSError(Exception):
     """ OcNOS Exception """
-    pass
 
 
 class OCNOSUnOpenedConnectionError(OCNOSError):

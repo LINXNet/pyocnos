@@ -3,7 +3,8 @@ Helpers for getting cli input
 """
 from distutils.util import strtobool
 import sys
-from future.builtins.misc import input  # pylint: disable=redefined-builtin
+
+from future.builtins.misc import input  # pylint: disable=redefined-builtin,no-name-in-module
 
 
 def query_yes_no(question):
