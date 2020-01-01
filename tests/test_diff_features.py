@@ -77,7 +77,6 @@ def test_diff_reordered_xml():
             '! <bar>200</bar>',
         ])
 
-
     assert build_xml_diff("""
           <data>
             <foo>
@@ -174,12 +173,15 @@ def test_diff_elems_in_same_name():
     """
     xmlstring_right = """
         <data>
-          <foo>100</foo>
           <foo>
             <loo>20</loo>
           </foo>
+          <foo>100</foo>
           <bar>
             <lar>
+              <col>
+                <roh>500</roh>
+              </col>
               <col>
                 <roh>600</roh>
               </col>
@@ -189,21 +191,159 @@ def test_diff_elems_in_same_name():
     """
 
     expected = os.linesep.join([
-        '[data]',
-        '  <foo>100</foo>',
-        '  [foo]',
-        '-   <loo>200</loo>',
-        '+   <loo>20</loo>',
-        '  [bar]',
-        '    [lar]',
-        '      [col]',
-        '-       <roh>400</roh>',
-        '+       <roh>600</roh>',
-        '-     <col>',
-        '-       <roh>500</roh>',
-        '-     </col>'
+      '[data]',
+      '! <foo>100</foo>',
+      '  [foo]',
+      '-   <loo>200</loo>',
+      '+   <loo>20</loo>',
+      '  [bar]',
+      '    [lar]',
+      '      [col]',
+      '-       <roh>400</roh>',
+      '+       <roh>600</roh>',
+      '!     <col>',
+      '!       <roh>500</roh>',
+      '!     </col>'
     ])
 
+    assert build_xml_diff(xmlstring_left, xmlstring_right) == expected
+
+
+def test_diff_elements_same_tag_simple():
+    """
+    When comparing two elements with child elements all in the same tag, it
+    is required to picked up the most similar pair to generate the diff.
+    """
+    # When two xml vary only about order
+    from lxml import etree
+    xmlstring_left = """
+      <data>
+        <baj>
+          <xin>
+            <hos>10.10.10.10</hos>
+          </xin>
+          <xin>
+            <hos>20.20.20.20</hos>
+          </xin>
+          <xin>
+            <hos>30.30.30.30</hos>
+          </xin>
+        </baj>
+      </data>
+    """
+    xmlstring_right = """
+      <data>
+        <baj>
+          <xin>
+            <hos>1.1.1.1</hos>
+          </xin>
+          <xin>
+            <hos>10.10.10.10</hos>
+            <foo>xyz</foo>
+          </xin>
+          <xin>
+            <hos>20.20.20.20</hos>
+          </xin>
+          <xin>
+            <hos>30.30.30.30</hos>
+          </xin>
+        </baj>
+      </data>
+    """
+
+    expected = os.linesep.join([
+      '[data]',
+      '  [baj]',
+      '    [xin]',
+      '      <hos>10.10.10.10</hos>',
+      '+     <foo>xyz</foo>',
+      '!   <xin>',
+      '!     <hos>20.20.20.20</hos>',
+      '!   </xin>',
+      '!   <xin>',
+      '!     <hos>30.30.30.30</hos>',
+      '!   </xin>',
+      '+   <xin>',
+      '+     <hos>1.1.1.1</hos>',
+      '+   </xin>'
+    ])
+
+    assert build_xml_diff(xmlstring_left, xmlstring_right) == expected
+
+
+def test_diff_elements_same_tag_advanced():
+    """
+    When comparing two elements with child elements all in the same tag, it
+    is required to picked up the most similar pair to generate the diff.
+    """
+    # When two xml vary only about order
+
+    xmlstring_left = """
+      <data>
+        <baj>
+          <xin>
+            <hos>10.10.10.10</hos>
+            <foo>abc</foo>
+          </xin>
+          <xin>
+            <hos>20.20.20.20</hos>
+          </xin>
+          <xin>
+            <hos>30.30.30.30</hos>
+          </xin>
+        </baj>
+      </data>
+    """
+    xmlstring_right = """
+      <data>
+        <baj>
+          <xin>
+            <hos>1.1.1.1</hos>
+          </xin>
+          <xin>
+            <hos>10.10.10.10</hos>
+            <foo>xyz</foo>
+          </xin>
+          <xin>
+            <hos>10.10.10.10</hos>
+            <foo>abc</foo>
+            <bar>xyz</bar>
+            <toa>xyz</toa>
+            <tea>xyz</tea>
+            <zab>xyz</zab>
+            <kar>xyz</kar>
+          </xin>
+          <xin>
+            <hos>30.30.30.30</hos>
+          </xin>
+        </baj>
+      </data>
+    """
+
+    expected = os.linesep.join([
+      '[data]',
+      '  [baj]',
+      '    [xin]',
+      '      <hos>10.10.10.10</hos>',
+      '-     <foo>abc</foo>',
+      '+     <foo>xyz</foo>',
+      '    [xin]',
+      '-     <hos>20.20.20.20</hos>',
+      '+     <hos>1.1.1.1</hos>',
+      '!   <xin>',
+      '!     <hos>30.30.30.30</hos>',
+      '!   </xin>',
+      '+   <xin>',
+      '+     <hos>10.10.10.10</hos>',
+      '+     <foo>abc</foo>',
+      '+     <bar>xyz</bar>',
+      '+     <toa>xyz</toa>',
+      '+     <tea>xyz</tea>',
+      '+     <zab>xyz</zab>',
+      '+     <kar>xyz</kar>',
+      '+   </xin>'
+    ])
+    print(build_xml_diff(xmlstring_left, xmlstring_right))
     assert build_xml_diff(xmlstring_left, xmlstring_right) == expected
 
 
@@ -234,15 +374,15 @@ def test_diff_value_changes():
         </data>
     """
     expected = os.linesep.join([
-        '[data]',
-        '- <foo>100</foo>',
-        '+ <foo>10</foo>',
-        '  [bar]',
-        '    [col]',
-        '-     <dah>200</dah>',
-        '+     <dah>20</dah>',
+      '[data]',
+      '- <foo>100</foo>',
+      '+ <foo>10</foo>',
+      '  [bar]',
+      '    [col]',
+      '-     <dah>200</dah>',
+      '+     <dah>20</dah>',
     ])
-
+    print(build_xml_diff(xmlstring_left, xmlstring_right))
     assert build_xml_diff(xmlstring_left, xmlstring_right) == expected
 
 
@@ -391,27 +531,27 @@ def test_diff_collapse_same_elements_among_diff():
         </data>
     """
     xmlstring_right = """
-    <data>
-      <foo>100</foo>
-      <bar>20</bar>
-      <coh>300</coh>
-      <deb>400</deb>
-      <fan>
-        <lol>
-          <mia>
-            <noh>900</noh>
-            <olo>1000</olo>
-            <pee>2000</pee>
-            <qre>30</qre>
-          </mia>
-        </lol>
-      </fan>
-      <eol>500</eol>
-      <hat>600</hat>
-      <inn>700</inn>
-      <jad>800</jad>
-    </data>
-"""
+      <data>
+        <foo>100</foo>
+        <bar>20</bar>
+        <coh>300</coh>
+        <deb>400</deb>
+        <fan>
+          <lol>
+            <mia>
+              <noh>900</noh>
+              <olo>1000</olo>
+              <pee>2000</pee>
+              <qre>30</qre>
+            </mia>
+          </lol>
+        </fan>
+        <eol>500</eol>
+        <hat>600</hat>
+        <inn>700</inn>
+        <jad>800</jad>
+      </data>
+    """
     expected = os.linesep.join([
         '[data]',
         '  <foo>100</foo>',
@@ -433,3 +573,4 @@ def test_diff_collapse_same_elements_among_diff():
     ])
 
     assert build_xml_diff(xmlstring_left, xmlstring_right) == expected
+

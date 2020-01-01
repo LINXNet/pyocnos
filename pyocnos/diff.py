@@ -24,6 +24,8 @@ import re
 
 from lxml import etree
 
+from .similarity import similarity_indexes
+
 # Four supported change types are declared here.
 # It indicates this module treats all sorts of xml element based changes are either an added, moved or removed.
 ADDED = 'added'
@@ -195,6 +197,28 @@ def mark_ref_path(path, elems):
     return [elem.attrib.update({'ref_path': path}) or elem for elem in elems]
 
 
+def similarity_zip(hashelements_left, hashelements_right):
+    """
+    Apart from mimic the behavior of builtin zip function, this routine allows
+    entries from the provided two iterable are provided in specific order, so
+    that the content in the generated tuple has the largest similarity, with
+    the constraint the whole similarity of the two given list of xml nodes is
+    at a max level.
+
+    Args:
+        hashelements_left: [HashElement]
+        hashelements_right: [HashElement]
+    Return:
+        a generator like zip
+    """
+    if not hashelements_left or not hashelements_right:
+        return
+    elems_left = [hashelem.elem for hashelem in hashelements_left]
+    elems_right = [hashelem.elem for hashelem in hashelements_right]
+    for index_left, index_right in similarity_indexes(elems_left, elems_right):
+        yield (hashelements_left[index_left], hashelements_right[index_right])
+
+
 def rdiff(hashelem_left, hashelem_right):
     """
     Recursively create diff information between two elements provided in arguments.
@@ -213,13 +237,13 @@ def rdiff(hashelem_left, hashelem_right):
         }
 
     """
-    # Or right.values[0].tag, all elements have common tag anyway
+    # pylint: disable=too-many-locals
     diffs = defaultdict(list)
 
     hashed_elements_left = [HashElement(sha(elem), elem) for elem in hashelem_left.elem]
     hashed_elements_right = [HashElement(sha(elem), elem) for elem in hashelem_right.elem]
 
-    # Comparing elements with the same hash but reordered
+    # Handle identical elments, which might be in different order
     inter_diff = ordering_intersection(hashed_elements_left, hashed_elements_right)
     diffs[MOVED].extend([helem.elem for helem in inter_diff[MOVED]])
     for hashelem in inter_diff[MOVED] + inter_diff[SAME]:
@@ -234,7 +258,7 @@ def rdiff(hashelem_left, hashelem_right):
         filtered_elems_left = [x for x in hashed_elements_left if x.elem.tag == tag]
         filtered_elems_right = [x for x in hashed_elements_right if x.elem.tag == tag]
 
-        for hashelem_l, hashelem_r in zip(filtered_elems_left, filtered_elems_right):
+        for hashelem_l, hashelem_r in similarity_zip(filtered_elems_left, filtered_elems_right):
             if has_children(hashelem_l.elem) and has_children(hashelem_r.elem):
                 deeper_diff = rdiff(hashelem_l, hashelem_r)
                 for change_type in deeper_diff:

@@ -4,3 +4,4 @@ lxml
 pyYAML
 paramiko
 cryptography
+munkres==1.0.12
