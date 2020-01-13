@@ -99,11 +99,11 @@ def similarity_element(elem_a, elem_b):
     seems less sensible; and if we carry one and and one more distince element
     to e4, the distance will become 0.6. Now the algorithm concludes e1 and e2
     is closer. To serve the purpose of measuring two XML elements, i.e.
-    creating a diff, some behavior reversal would confuse the end user.
+    creating a diff, such behavior reversal would confuse the end user.
     Using similarity as metrics solves this problem by voiding the accumulation
     of distances among different child elements.
 
-    The reson for the other adjustment, i.e. defining a small similarity to
+    The reason for the other adjustment, i.e. defining a small similarity to
     describe XML elements with the same tag but different comes from this
     problem, for comparing e1
       <snmp>
@@ -141,7 +141,7 @@ def similarity_element(elem_a, elem_b):
 
 def similarity_value(elem_a, elem_b):
     """This function compares the values of two XML elements """
-    if isinstance(elem_a, str) and isinstance(elem_b, str):
+    if isinstance(elem_a.text, str) and isinstance(elem_b.text, str):
         return elem_a.text.strip() == elem_b.text.strip()
 
     return elem_a.text == elem_b.text

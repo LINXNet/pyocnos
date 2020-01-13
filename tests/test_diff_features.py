@@ -273,7 +273,7 @@ def test_diff_elements_same_tag_simple():
 
 def test_diff_elements_same_tag_advanced():
     """
-    When comparing two elements with child elements all in the same tag, it
+      When comparing two elements with child elements all in the same tag, it
     is required to picked up the most similar pair to generate the diff.
     """
     # When two xml vary only about order
@@ -343,7 +343,6 @@ def test_diff_elements_same_tag_advanced():
       '+     <kar>xyz</kar>',
       '+   </xin>'
     ])
-    print(build_xml_diff(xmlstring_left, xmlstring_right))
     assert build_xml_diff(xmlstring_left, xmlstring_right) == expected
 
 
@@ -382,7 +381,6 @@ def test_diff_value_changes():
       '-     <dah>200</dah>',
       '+     <dah>20</dah>',
     ])
-    print(build_xml_diff(xmlstring_left, xmlstring_right))
     assert build_xml_diff(xmlstring_left, xmlstring_right) == expected
 
 
