@@ -45,6 +45,7 @@ class TestOCNOS(unittest.TestCase):
             host='hostname', port=830, username='username',
             password='password', timeout=100,
             look_for_keys=False,
+            allow_agent=False,
             unknown_host_cb=simple_unknown_host_cb
         )
 
@@ -58,6 +59,7 @@ class TestOCNOS(unittest.TestCase):
             host='hostname', port=830, username='username',
             password='password', timeout=60,
             look_for_keys=False,
+            allow_agent=False,
             unknown_host_cb=simple_unknown_host_cb
         )
         close_session_mock.assert_called_once()

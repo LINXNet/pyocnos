@@ -154,6 +154,7 @@ class OCNOS(object):
         Returns:    None
         Raises:     OCNOSConnectionError
         """
+        allow_agent = bool(self.password is None)
 
         try:
             self._connection = manager.connect(
@@ -163,6 +164,7 @@ class OCNOS(object):
                 password=self.password,
                 timeout=self.timeout,
                 look_for_keys=False,
+                allow_agent=allow_agent,
                 unknown_host_cb=get_unknown_host_cb(self)
             )
             # todo: Remove this once Ipinfusion have fix issue on as5812 switches for timeout
@@ -208,6 +210,13 @@ class OCNOS(object):
         Raises: OCNOSConnectionError
         """
         if self._connection:
+            # If the netconf connection is closed in napalm __del__ method
+            # (e.g. as in napalm_ansible) the underlying ssh transport can
+            # be closed before the close_session method is called
+            if not self._connection._session.transport.is_active():  # pylint: disable=protected-access
+                raise OCNOSConnectionError(
+                    'Unable to close ssh connection. The ssh transport is closed.'
+                )
             try:
                 self._connection.close_session()
             except NCClientError as ncclient_exception:
