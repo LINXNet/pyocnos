@@ -1,9 +1,30 @@
 #!/usr/bin/env python
 """ Exceptions for pyocnos """
 
+from ncclient.operations.rpc import RPCError
+
 
 class OCNOSError(Exception):
     """ OcNOS Exception """
+    def __init__(self, ncclient_exc=None, msg=''):
+        if ncclient_exc is not None and isinstance(ncclient_exc, RPCError):
+            error_msg = ('{}\n'
+                         'rpc-error:\n'
+                         '    error-tag: {}\n'
+                         '    error-path: {}\n'
+                         '    error-message: {}\n'
+                         '    error-info:\n'
+                         '    {}'.format(
+                             msg,
+                             ncclient_exc.tag or '',
+                             ncclient_exc.path or '',
+                             ncclient_exc.message or '',
+                             ncclient_exc.info or ''
+                         ))
+        else:
+            error_msg = msg
+
+        super().__init__(error_msg)
 
 
 class OCNOSUnOpenedConnectionError(OCNOSError):
@@ -13,7 +34,7 @@ class OCNOSUnOpenedConnectionError(OCNOSError):
 
     def __init__(self):
         message = 'Please open a connection first using the open().'
-        super(OCNOSUnOpenedConnectionError, self).__init__(message)
+        super(OCNOSUnOpenedConnectionError, self).__init__(msg=message)
 
 
 class OCNOSConnectionError(OCNOSError):
@@ -33,10 +54,6 @@ class OCNOSUnableToRetrieveConfigError(OCNOSError):
        Exception class when unable to retrieve running config
     """
 
-    def __init__(self):
-        message = 'Unable to retrieve running config.'
-        super(OCNOSUnableToRetrieveConfigError, self).__init__(message)
-
 
 class OCNOSNoCandidateConfigError(OCNOSError):
     """
@@ -45,7 +62,7 @@ class OCNOSNoCandidateConfigError(OCNOSError):
 
     def __init__(self):
         message = "Please provide 'filename' or 'config' attribute"
-        super(OCNOSNoCandidateConfigError, self).__init__(message)
+        super(OCNOSNoCandidateConfigError, self).__init__(msg=message)
 
 
 class OCNOSLoadCandidateConfigFileReadError(OCNOSError):
@@ -58,7 +75,7 @@ class OCNOSLoadCandidateConfigFileReadError(OCNOSError):
         super(
             OCNOSLoadCandidateConfigFileReadError,
             self
-        ).__init__(message)
+        ).__init__(msg=message)
 
 
 class OCNOSCandidateConfigNotLoadedError(OCNOSError):
@@ -71,7 +88,7 @@ class OCNOSCandidateConfigNotLoadedError(OCNOSError):
         super(
             OCNOSCandidateConfigNotLoadedError,
             self
-        ).__init__(message)
+        ).__init__(msg=message)
 
 
 class OCNOSCandidateConfigNotInServerCapabilitiesError(OCNOSError):
@@ -84,17 +101,10 @@ class OCNOSCandidateConfigNotInServerCapabilitiesError(OCNOSError):
         super(
             OCNOSCandidateConfigNotInServerCapabilitiesError,
             self
-        ).__init__(message)
+        ).__init__(msg=message)
 
 
 class OCNOSCandidateConfigInvalidError(OCNOSError):
     """
     Exception class when candidate config is invalid
     """
-
-    def __init__(self):
-        message = "Candidate config invalid."
-        super(
-            OCNOSCandidateConfigInvalidError,
-            self
-        ).__init__(message)

@@ -122,7 +122,7 @@ class OCNOS(object):
 
         self._connection = None
         self._candidate_config = None
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger('OCNOS')
 
     def __enter__(self):
         """
@@ -172,7 +172,7 @@ class OCNOS(object):
         except NCClientError as ncclient_exception:
             self.log.error('Error', exc_info=True)
             raise_from(
-                OCNOSConnectionError('Unable to open ssh connection.'),
+                OCNOSConnectionError(ncclient_exception, 'Unable to open ssh connection.'),
                 ncclient_exception
             )
         else:
@@ -194,7 +194,7 @@ class OCNOS(object):
         except NCClientError as ncclient_exception:
             self.log.error('Error', exc_info=True)
             raise_from(
-                OCNOSBasicModeError('Unable to set basic mode to trim.'),
+                OCNOSBasicModeError(ncclient_exception, 'Unable to set basic mode to trim.'),
                 ncclient_exception
             )
         else:
@@ -223,6 +223,7 @@ class OCNOS(object):
                 self.log.error('error', exc_info=True)
                 raise_from(
                     OCNOSConnectionError(
+                        ncclient_exception,
                         'Unable to close ssh connection.'
                     ),
                     ncclient_exception
@@ -321,7 +322,7 @@ class OCNOS(object):
             except NCClientError as ncclient_exception:
                 self.log.error('error', exc_info=True)
                 raise_from(
-                    OCNOSCandidateConfigInvalidError,
+                    OCNOSCandidateConfigInvalidError(ncclient_exception, 'Candidate config invalid.'),
                     ncclient_exception
                 )
         self._connection.copy_config(source='running', target='startup')
@@ -364,7 +365,7 @@ class OCNOS(object):
             except NCClientError as ncclient_exception:
                 self.log.error('Error', exc_info=True)
                 raise_from(
-                    OCNOSUnableToRetrieveConfigError,
+                    OCNOSUnableToRetrieveConfigError(ncclient_exception, 'Unable to retrieve running config.'),
                     ncclient_exception
                 )
             else:
