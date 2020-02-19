@@ -24,7 +24,7 @@ class OCNOSError(Exception):
         else:
             error_msg = msg
 
-        super().__init__(error_msg)
+        super(OCNOSError, self).__init__(error_msg)
 
 
 class OCNOSUnOpenedConnectionError(OCNOSError):
