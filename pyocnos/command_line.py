@@ -16,7 +16,7 @@ from pyocnos.ocnos import OCNOS
 
 
 # pylint: disable=too-many-locals,too-many-arguments
-def process(config_file_path, hostname, actions, save_config_file_path, candidate_file_path, verbose='0'):
+def process(config_file_path, hostname, actions, save_config_file_path, candidate_file_path, verbose=0):
     """
     Initialize device and call the actions passed in
     Args:
@@ -37,7 +37,7 @@ def process(config_file_path, hostname, actions, save_config_file_path, candidat
     password = config['config']['password']
     timeout = config['config']['timeout']
 
-    if int(verbose or '0') > 0:
+    if verbose > 0:
         console_handler = logging.StreamHandler(sys.stdout)
         formatter = logging.Formatter('%(name)s | %(levelname)s | %(filename)s/%(funcName)s:%(lineno)d | %(message)s')
         console_handler.setFormatter(formatter)
@@ -136,8 +136,9 @@ def parse_and_get_args():
 
     parser.add_argument(
         '-v',
-        '--verbose',
-        dest='log_level',
+        '--verbosity',
+        action='count',
+        default=0,
         help=textwrap.dedent("""
         Set logging verbose level. It accepts a number >= 0.
         The default value is 0, the minimal log besides stack backtrace is given;
@@ -165,7 +166,7 @@ def main():
         actions=args.actions,
         save_config_file_path=args.save_config_file_path,
         candidate_file_path=args.candidate_file_path,
-        verbose=args.log_level
+        verbose=args.verbosity
     )
     for line in output:
         print(line)
