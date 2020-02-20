@@ -6,7 +6,7 @@ from ncclient.operations.rpc import RPCError
 
 class OCNOSError(Exception):
     """ OcNOS Exception """
-    def __init__(self, ncclient_exc=None, msg=''):
+    def __init__(self, msg='', ncclient_exc=None):
         if ncclient_exc is not None and isinstance(ncclient_exc, RPCError):
             error_msg = ('{}\n'
                          'rpc-error:\n'
@@ -34,7 +34,7 @@ class OCNOSUnOpenedConnectionError(OCNOSError):
 
     def __init__(self):
         message = 'Please open a connection first using the open().'
-        super(OCNOSUnOpenedConnectionError, self).__init__(msg=message)
+        super(OCNOSUnOpenedConnectionError, self).__init__(message)
 
 
 class OCNOSConnectionError(OCNOSError):
@@ -62,7 +62,7 @@ class OCNOSNoCandidateConfigError(OCNOSError):
 
     def __init__(self):
         message = "Please provide 'filename' or 'config' attribute"
-        super(OCNOSNoCandidateConfigError, self).__init__(msg=message)
+        super(OCNOSNoCandidateConfigError, self).__init__(message)
 
 
 class OCNOSLoadCandidateConfigFileReadError(OCNOSError):
@@ -75,7 +75,7 @@ class OCNOSLoadCandidateConfigFileReadError(OCNOSError):
         super(
             OCNOSLoadCandidateConfigFileReadError,
             self
-        ).__init__(msg=message)
+        ).__init__(message)
 
 
 class OCNOSCandidateConfigNotLoadedError(OCNOSError):
@@ -88,7 +88,7 @@ class OCNOSCandidateConfigNotLoadedError(OCNOSError):
         super(
             OCNOSCandidateConfigNotLoadedError,
             self
-        ).__init__(msg=message)
+        ).__init__(message)
 
 
 class OCNOSCandidateConfigNotInServerCapabilitiesError(OCNOSError):
@@ -101,7 +101,7 @@ class OCNOSCandidateConfigNotInServerCapabilitiesError(OCNOSError):
         super(
             OCNOSCandidateConfigNotInServerCapabilitiesError,
             self
-        ).__init__(msg=message)
+        ).__init__(message)
 
 
 class OCNOSCandidateConfigInvalidError(OCNOSError):

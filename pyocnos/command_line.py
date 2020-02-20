@@ -11,6 +11,7 @@ import textwrap
 
 import yaml
 
+from pyocnos import LOGGER_NAME
 from pyocnos.ocnos import OCNOS
 
 
@@ -40,8 +41,8 @@ def process(config_file_path, hostname, actions, save_config_file_path, candidat
         console_handler = logging.StreamHandler(sys.stdout)
         formatter = logging.Formatter('%(name)s | %(levelname)s | %(filename)s/%(funcName)s:%(lineno)d | %(message)s')
         console_handler.setFormatter(formatter)
-        logging.getLogger('OCNOS').setLevel(logging.DEBUG)
-        logging.getLogger('OCNOS').addHandler(console_handler)
+        logging.getLogger(LOGGER_NAME).setLevel(logging.DEBUG)
+        logging.getLogger(LOGGER_NAME).addHandler(console_handler)
 
         if int(verbose) > 1:
             logging.getLogger('ncclient').setLevel(logging.DEBUG)
