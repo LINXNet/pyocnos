@@ -16,10 +16,14 @@ class OCNOSError(Exception):
                          '    error-info:\n'
                          '    {}'.format(
                              msg,
-                             ncclient_exc.tag or '',
-                             ncclient_exc.path or '',
-                             ncclient_exc.message or '',
-                             ncclient_exc.info or ''
+                             # The internal attributes in RPCError class for
+                             # its properties, "tag", "path", etc. might be
+                             # unavailable since they are all set at run time
+                             # depending on rpc error.
+                             getattr(ncclient_exc, '_tag', ''),
+                             getattr(ncclient_exc, '_path', ''),
+                             getattr(ncclient_exc, '_message', ''),
+                             getattr(ncclient_exc, '_info', '')
                          ))
         else:
             error_msg = msg
