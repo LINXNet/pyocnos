@@ -11,10 +11,12 @@ import textwrap
 
 import yaml
 
+from pyocnos import LOGGER_NAME
 from pyocnos.ocnos import OCNOS
 
 
-def process(config_file_path, hostname, actions, save_config_file_path, candidate_file_path):
+# pylint: disable=too-many-locals,too-many-arguments
+def process(config_file_path, hostname, actions, save_config_file_path, candidate_file_path, verbose=0):
     """
     Initialize device and call the actions passed in
     Args:
@@ -35,10 +37,16 @@ def process(config_file_path, hostname, actions, save_config_file_path, candidat
     password = config['config']['password']
     timeout = config['config']['timeout']
 
-    debug = config['config'].get('debug', False)
-    if debug:
-        logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-        logging.getLogger().setLevel(logging.DEBUG)
+    if verbose > 0:
+        console_handler = logging.StreamHandler(sys.stdout)
+        formatter = logging.Formatter('%(name)s | %(levelname)s | %(filename)s/%(funcName)s:%(lineno)d | %(message)s')
+        console_handler.setFormatter(formatter)
+        logging.getLogger(LOGGER_NAME).setLevel(logging.DEBUG)
+        logging.getLogger(LOGGER_NAME).addHandler(console_handler)
+
+        if int(verbose) > 1:
+            logging.getLogger('ncclient').setLevel(logging.DEBUG)
+            logging.getLogger('ncclient').addHandler(console_handler)
 
     with OCNOS(hostname=hostname, username=username, password=password, timeout=timeout) as device:
         output = []
@@ -118,11 +126,25 @@ def parse_and_get_args():
         hostname foo.bar foo.bar-running.xml will be created.
         """)
     )
+
     parser.add_argument(
         '-c',
         '--candidate-file-path',
         dest='candidate_file_path',
         help='Candidate file path',
+    )
+
+    parser.add_argument(
+        '-v',
+        '--verbosity',
+        action='count',
+        default=0,
+        help=textwrap.dedent("""
+        Set logging verbose level. It accepts a number >= 0.
+        The default value is 0, the minimal log besides stack backtrace is given;
+        Verbose level 1 enables debug level logging for pyocnos;
+        Verbose level 2 emits ncclient debug level logging as well.
+        """)
     )
 
     args = parser.parse_args()
@@ -143,7 +165,8 @@ def main():
         hostname=args.hostname,
         actions=args.actions,
         save_config_file_path=args.save_config_file_path,
-        candidate_file_path=args.candidate_file_path
+        candidate_file_path=args.candidate_file_path,
+        verbose=args.verbosity
     )
     for line in output:
         print(line)

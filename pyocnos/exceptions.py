@@ -1,9 +1,34 @@
 #!/usr/bin/env python
 """ Exceptions for pyocnos """
 
+from ncclient.operations.rpc import RPCError
+
 
 class OCNOSError(Exception):
     """ OcNOS Exception """
+    def __init__(self, msg='', ncclient_exc=None):
+        if ncclient_exc is not None and isinstance(ncclient_exc, RPCError):
+            error_msg = ('{}\n'
+                         'rpc-error:\n'
+                         '    error-tag: {}\n'
+                         '    error-path: {}\n'
+                         '    error-message: {}\n'
+                         '    error-info:\n'
+                         '    {}'.format(
+                             msg,
+                             # The internal attributes in RPCError class for
+                             # its properties, "tag", "path", etc. might be
+                             # unavailable since they are all set at run time
+                             # depending on rpc error.
+                             getattr(ncclient_exc, '_tag', ''),
+                             getattr(ncclient_exc, '_path', ''),
+                             getattr(ncclient_exc, '_message', ''),
+                             getattr(ncclient_exc, '_info', '')
+                         ))
+        else:
+            error_msg = msg
+
+        super(OCNOSError, self).__init__(error_msg)
 
 
 class OCNOSUnOpenedConnectionError(OCNOSError):
@@ -32,10 +57,6 @@ class OCNOSUnableToRetrieveConfigError(OCNOSError):
     """
        Exception class when unable to retrieve running config
     """
-
-    def __init__(self):
-        message = 'Unable to retrieve running config.'
-        super(OCNOSUnableToRetrieveConfigError, self).__init__(message)
 
 
 class OCNOSNoCandidateConfigError(OCNOSError):
@@ -91,10 +112,3 @@ class OCNOSCandidateConfigInvalidError(OCNOSError):
     """
     Exception class when candidate config is invalid
     """
-
-    def __init__(self):
-        message = "Candidate config invalid."
-        super(
-            OCNOSCandidateConfigInvalidError,
-            self
-        ).__init__(message)

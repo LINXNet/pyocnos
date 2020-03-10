@@ -13,6 +13,7 @@ from ncclient import manager
 from ncclient import NCClientError
 import paramiko
 
+from pyocnos import LOGGER_NAME
 from pyocnos.diff import build_xml_diff
 from pyocnos.exceptions import OCNOSBasicModeError
 from pyocnos.exceptions import OCNOSCandidateConfigInvalidError
@@ -122,7 +123,7 @@ class OCNOS(object):
 
         self._connection = None
         self._candidate_config = None
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger(LOGGER_NAME)
 
     def __enter__(self):
         """
@@ -172,7 +173,7 @@ class OCNOS(object):
         except NCClientError as ncclient_exception:
             self.log.error('Error', exc_info=True)
             raise_from(
-                OCNOSConnectionError('Unable to open ssh connection.'),
+                OCNOSConnectionError('Unable to open ssh connection.', ncclient_exception),
                 ncclient_exception
             )
         else:
@@ -194,7 +195,7 @@ class OCNOS(object):
         except NCClientError as ncclient_exception:
             self.log.error('Error', exc_info=True)
             raise_from(
-                OCNOSBasicModeError('Unable to set basic mode to trim.'),
+                OCNOSBasicModeError('Unable to set basic mode to trim.', ncclient_exception),
                 ncclient_exception
             )
         else:
@@ -223,7 +224,8 @@ class OCNOS(object):
                 self.log.error('error', exc_info=True)
                 raise_from(
                     OCNOSConnectionError(
-                        'Unable to close ssh connection.'
+                        'Unable to close ssh connection.',
+                        ncclient_exception
                     ),
                     ncclient_exception
                 )
@@ -321,7 +323,7 @@ class OCNOS(object):
             except NCClientError as ncclient_exception:
                 self.log.error('error', exc_info=True)
                 raise_from(
-                    OCNOSCandidateConfigInvalidError,
+                    OCNOSCandidateConfigInvalidError('Candidate config invalid.', ncclient_exception),
                     ncclient_exception
                 )
         self._connection.copy_config(source='running', target='startup')
@@ -364,7 +366,7 @@ class OCNOS(object):
             except NCClientError as ncclient_exception:
                 self.log.error('Error', exc_info=True)
                 raise_from(
-                    OCNOSUnableToRetrieveConfigError,
+                    OCNOSUnableToRetrieveConfigError('Unable to retrieve running config.', ncclient_exception),
                     ncclient_exception
                 )
             else:
