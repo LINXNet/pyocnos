@@ -323,7 +323,7 @@ class OCNOS(object):
             except NCClientError as ncclient_exception:
                 self.log.error('error', exc_info=True)
                 raise_from(
-                    OCNOSCandidateConfigInvalidError('Candidate config invalid.', ncclient_exception),
+                    OCNOSCandidateConfigInvalidError('Failed to change the running config.', ncclient_exception),
                     ncclient_exception
                 )
         self._connection.copy_config(source='running', target='startup')
