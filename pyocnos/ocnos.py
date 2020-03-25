@@ -372,7 +372,7 @@ class OCNOS(object):
             else:
                 running_config = lxml.etree.fromstring(config.encode())
                 running_config.tag = 'config'
-                return lxml.etree.tostring(running_config, encoding='UTF-8', pretty_print=True)
+                return lxml.etree.tostring(running_config, encoding='UTF-8', pretty_print=True).decode()
         else:
             self.log.error('Error', exc_info=True)
             raise OCNOSUnOpenedConnectionError

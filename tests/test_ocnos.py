@@ -122,15 +122,15 @@ class TestOCNOS(unittest.TestCase):
             config_file.seek(0)
             self.device.load_candidate_config(filename=config_file.name)
         self.assertEqual(
-            b'<config>foo</config>',
-            lxml.etree.tostring(self.device._candidate_config)
+            '<config>foo</config>',
+            lxml.etree.tostring(self.device._candidate_config).decode()
         )
 
     def test_success_load_candidate_config_a_string(self):
         self.device.load_candidate_config(config='<config>foo</config>')
         self.assertEqual(
-            b'<config>foo</config>',
-            lxml.etree.tostring(self.device._candidate_config)
+            '<config>foo</config>',
+            lxml.etree.tostring(self.device._candidate_config).decode()
         )
 
     def test_fail_commit_config_when_no_candidate_config_loaded(self):
@@ -247,7 +247,7 @@ class TestOCNOS(unittest.TestCase):
 
             config_element = lxml.etree.Element('config')
             config_element.text = '1'
-            expected = lxml.etree.tostring(config_element, encoding='UTF-8', pretty_print=True)
+            expected = lxml.etree.tostring(config_element, encoding='UTF-8', pretty_print=True).decode()
             self.assertEqual(expected, self.device.get_config('startup')['startup'])
 
     def test_success_get_config_for_all_option(self):
@@ -258,7 +258,7 @@ class TestOCNOS(unittest.TestCase):
             config_element = lxml.etree.Element('config')
             vr = lxml.etree.SubElement(config_element, 'vr')
             vr.text = '1'
-            config_str = lxml.etree.tostring(config_element, encoding='UTF-8', pretty_print=True)
+            config_str = lxml.etree.tostring(config_element, encoding='UTF-8', pretty_print=True).decode()
             expected = {
                 'running': config_str,
                 'startup': config_str,
@@ -277,7 +277,7 @@ class TestOCNOS(unittest.TestCase):
             config_element = lxml.etree.Element('config')
             vr = lxml.etree.SubElement(config_element, 'vr')
             vr.text = '1'
-            config_str = lxml.etree.tostring(config_element, encoding='UTF-8', pretty_print=True)
+            config_str = lxml.etree.tostring(config_element, encoding='UTF-8', pretty_print=True).decode()
             expected = {
                 'running': config_str,
                 'startup': '',
@@ -290,7 +290,7 @@ class TestOCNOS(unittest.TestCase):
 
     def test_success_discard_config(self):
         self.device.load_candidate_config(config='<config>foo</config>')
-        self.assertEqual(b'<config>foo</config>', lxml.etree.tostring(self.device._candidate_config))
+        self.assertEqual('<config>foo</config>', lxml.etree.tostring(self.device._candidate_config).decode())
 
         self.device.discard_config()
         self.assertIsNone(self.device._candidate_config)
