@@ -56,7 +56,7 @@ def process(config_file_path, hostname, actions, save_config_file_path, candidat
 
             elif action in ['running', 'startup']:
                 save_config_file_path = save_config_file_path or '{}-{}.xml'.format(hostname, action)
-                with io.open(save_config_file_path, 'wb') as xml_file:
+                with io.open(save_config_file_path, 'w') as xml_file:
                     xml_file.write(device.get_config(action)[action])
                 output.append('Devices {} config xml stored in {}'.format(action.capitalize(), save_config_file_path))
 

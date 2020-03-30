@@ -262,11 +262,21 @@ class OCNOS(object):
             raise OCNOSNoCandidateConfigError
         elif filename:
             try:
-                self._candidate_config = lxml.etree.parse(filename).getroot()
+                self._candidate_config = lxml.etree.parse(
+                    filename,
+                    parser=lxml.etree.XMLParser(remove_blank_text=True)
+                ).getroot()
             except IOError as io_error:
                 raise_from(OCNOSLoadCandidateConfigFileReadError, io_error)
         else:
-            self._candidate_config = lxml.etree.fromstring(config)
+            # napalm_install_config passess config as string to the driver so
+            # encoding that to bytes
+            if isinstance(config, str):
+                config = config.encode()
+            # parsing from bytes, so it works with xml encoding declaration
+            self._candidate_config = lxml.etree.fromstring(
+                config,
+                parser=lxml.etree.XMLParser(remove_blank_text=True))
         self._candidate_config.tag = 'config'
         self.log.info('candidate_config loaded')
 
@@ -370,7 +380,9 @@ class OCNOS(object):
                     ncclient_exception
                 )
             else:
-                running_config = lxml.etree.fromstring(config.encode())
+                running_config = lxml.etree.fromstring(
+                    config.encode(),
+                    parser=lxml.etree.XMLParser(remove_blank_text=True))
                 running_config.tag = 'config'
                 return lxml.etree.tostring(running_config, encoding='UTF-8', pretty_print=True).decode()
         else:
