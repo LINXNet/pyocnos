@@ -269,8 +269,12 @@ class OCNOS(object):
             except IOError as io_error:
                 raise_from(OCNOSLoadCandidateConfigFileReadError, io_error)
         else:
+            # napalm_install_config passess config as string to the driver, but
+            # lxml tostring() function produces bytes so bytes can be easilly
+            # passed into this function, so supporting both
             if isinstance(config, str):
                 config = config.encode()
+            # fromstring() requires bytes
             self._candidate_config = lxml.etree.fromstring(
                 config,
                 parser=lxml.etree.XMLParser(remove_blank_text=True))
