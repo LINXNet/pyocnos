@@ -158,7 +158,8 @@ def normalize_tree(xmlstring):
     # Remove pure white space string with customised xml parser
     parser = etree.XMLParser(remove_blank_text=True)
 
-    tree = etree.XML(xmlstring, parser=parser)
+    # parsing from bytes, so it works with xml encoding declaration
+    tree = etree.XML(xmlstring.encode(), parser=parser)
 
     # Loop over all elements and do...
     for elem in tree.iter('*'):

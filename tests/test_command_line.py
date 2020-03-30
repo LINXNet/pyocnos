@@ -159,7 +159,7 @@ class TestProcessFunction(TestCase):
     @mock.patch(ocnos_class_path, autospec=True)
     def test_success_running_action(self, mock_ocnos):
         ocnos_instance = mock_ocnos.return_value.__enter__.return_value
-        ocnos_instance.get_config.return_value = {'running': b'Running config'}
+        ocnos_instance.get_config.return_value = {'running': 'Running config'}
         file_path = os.path.join(current_path, 'running.xml')
         process(
             config_file_path=os.path.join(current_path, 'user-details.yml.example'),
@@ -174,7 +174,7 @@ class TestProcessFunction(TestCase):
     @mock.patch(ocnos_class_path, autospec=True)
     def test_success_startup_action(self, mock_ocnos):
         ocnos_instance = mock_ocnos.return_value.__enter__.return_value
-        ocnos_instance.get_config.return_value = {'startup': b'Startup config'}
+        ocnos_instance.get_config.return_value = {'startup': 'Startup config'}
         file_path = os.path.join(current_path, 'startup.xml')
         process(
             config_file_path=os.path.join(current_path, 'user-details.yml.example'),
