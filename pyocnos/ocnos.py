@@ -263,7 +263,7 @@ class OCNOS(object):
         elif filename:
             try:
                 self._candidate_config = lxml.etree.parse(
-                    filename,
+                    str(filename),
                     parser=lxml.etree.XMLParser(remove_blank_text=True)
                 ).getroot()
             except IOError as io_error:
