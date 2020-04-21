@@ -33,6 +33,12 @@ MOVED = 'moved'
 REMOVED = 'removed'
 SAME = 'same'
 DIFF_SYMBOLS = {MOVED: '!', ADDED: '+', REMOVED: '-'}
+# mapping of xml elements to its child to use as a key in diff comparison
+ELEMENTS_WITH_FIXED_KEYS = {
+    'interface': 'ifName',
+    'accessListMac': 'aclNameMAC',
+    'filterList': 'accessNumFL',
+}
 
 # Data structure to pair an xml element and its hash.
 HashElement = namedtuple('HashElement', ['hash', 'elem'])
@@ -202,9 +208,10 @@ def similarity_zip(hashelements_left, hashelements_right):
     """
     Apart from mimic the behavior of builtin zip function, this routine allows
     entries from the provided two iterable are provided in specific order, so
-    that the content in the generated tuple has the largest similarity, with
-    the constraint the whole similarity of the two given list of xml nodes is
-    at a max level.
+    that the content in the generated tuple has the largest similarity or
+    elements in the generated tuple are having the same value of fixed key
+    child elements, with the constraint the whole similarity of the two given
+    list of xml nodes is at a max level.
 
     Args:
         hashelements_left: [HashElement]
@@ -216,8 +223,17 @@ def similarity_zip(hashelements_left, hashelements_right):
         return
     elems_left = [hashelem.elem for hashelem in hashelements_left]
     elems_right = [hashelem.elem for hashelem in hashelements_right]
-    for index_left, index_right in similarity_indexes(elems_left, elems_right):
-        yield (hashelements_left[index_left], hashelements_right[index_right])
+    if str(elems_left[0].tag).strip() in ELEMENTS_WITH_FIXED_KEYS:
+        element = str(elems_left[0].tag).strip()
+        key = ELEMENTS_WITH_FIXED_KEYS[element]
+        keys_left = {str(item.elem.find(key).text): item for item in hashelements_left}
+        keys_right = {str(item.elem.find(key).text): item for item in hashelements_right}
+        for value in keys_left:
+            if value in keys_right:
+                yield (keys_left[value], keys_right[value])
+    else:
+        for index_left, index_right in similarity_indexes(elems_left, elems_right):
+            yield (hashelements_left[index_left], hashelements_right[index_right])
 
 
 def rdiff(hashelem_left, hashelem_right):

@@ -572,3 +572,75 @@ def test_diff_collapse_same_elements_among_diff():
 
     assert build_xml_diff(xmlstring_left, xmlstring_right) == expected
 
+def test_diff_fixes_keys():
+    """
+    When xml elements which are supposed to  whole branch of xml is involved in the diff, the diff does not collapse it but show all children
+    and leaf elements.
+    """
+    xmlstring_left = """
+        <data>
+          <vr>0</vr>
+          <interface>
+            <ifName>200</ifName>
+          </interface>
+          <interface>
+            <ifName>100</ifName>
+          </interface>
+          <interface>
+            <ifName>500</ifName>
+            <eol>
+              <fen>200</fen>
+            </eol>
+            <elk>500</elk>
+          </interface>
+          <interface>
+            <ifName>300</ifName>
+          </interface>
+        </data>
+    """
+    xmlstring_right = """
+        <data>
+          <interface>
+            <ifName>500</ifName>
+            <elk>500</elk>
+          </interface>
+          <interface>
+            <ifName>100</ifName>
+          </interface>
+          <interface>
+            <ifName>400</ifName>
+          </interface>
+          <interface>
+            <ifName>300</ifName>
+            <mia>
+              <nil>400</nil>
+            </mia>
+          </interface>
+        </data>
+    """
+    expected = os.linesep.join([
+        '[data]',
+        '- <vr>0</vr>',
+        '- <interface>',
+        '-   <ifName>200</ifName>',
+        '- </interface>',
+        '! <interface>',
+        '!   <ifName>100</ifName>',
+        '! </interface>',
+        '  [interface]',
+        '    <ifName>500</ifName>',
+        '-   <eol>',
+        '-     <fen>200</fen>',
+        '-   </eol>',
+        '!   <elk>500</elk>',
+        '  [interface]',
+        '    <ifName>300</ifName>',
+        '+   <mia>',
+        '+     <nil>400</nil>',
+        '+   </mia>',
+        # Any added element is put at the tail of the diff.
+        '+ <interface>',
+        '+   <ifName>400</ifName>',
+        '+ </interface>',
+    ])
+    assert build_xml_diff(xmlstring_left, xmlstring_right) == expected
