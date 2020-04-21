@@ -38,6 +38,7 @@ ELEMENTS_WITH_FIXED_KEYS = {
     'interface': 'ifName',
     'accessListMac': 'aclNameMAC',
     'filterList': 'accessNumFL',
+    'nvoAccessIfVlanInfo': 'vlanId',
 }
 
 # Data structure to pair an xml element and its hash.
