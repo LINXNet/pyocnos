@@ -174,6 +174,7 @@ class OCNOS(object):
         # are globally set and used by all connections)
         # OCNOS uses standard netconf operations, so using workaround with
         # DefaultManager class to temporarily fix the issue
+        # ncclient github issue - https://github.com/ncclient/ncclient/issues/386
         try:
             built_in_manager = manager.connect(
                 host=self.hostname,
