@@ -17,6 +17,7 @@ from pyocnos.exceptions import OCNOSUnableToRetrieveConfigError
 from pyocnos.ocnos import OCNOS, get_unknown_host_cb
 
 connect_path = 'pyocnos.ocnos.manager.connect'
+manager_path = 'pyocnos.ocnos.DefaultManager'
 unknown_host_cb_path = 'pyocnos.ocnos.get_unknown_host_cb'
 
 
@@ -37,9 +38,10 @@ class TestOCNOS(unittest.TestCase):
     def setUp(self):
         self.device = OCNOS(hostname='hostname', username='username', password='password', timeout=100)
 
+    @mock.patch(manager_path)
     @mock.patch(connect_path)
     @mock.patch(unknown_host_cb_path, get_unknown_host_mock)
-    def test_open(self, mock_manager_connect):
+    def test_open(self, mock_manager_connect, _):
         self.device.open()
         mock_manager_connect.assert_called_with(
             host='hostname', port=830, username='username',
@@ -49,9 +51,10 @@ class TestOCNOS(unittest.TestCase):
             unknown_host_cb=simple_unknown_host_cb
         )
 
+    @mock.patch(manager_path)
     @mock.patch(connect_path)
     @mock.patch(unknown_host_cb_path, get_unknown_host_mock)
-    def test_ocnos_class_in_context(self, mock_manager_connect):
+    def test_ocnos_class_in_context(self, mock_manager_connect, _):
         with OCNOS(hostname='hostname', username='username', password='password') as device:
             close_session_mock = device._connection.close_session = mock.MagicMock()
             device.is_alive()
@@ -64,20 +67,23 @@ class TestOCNOS(unittest.TestCase):
         )
         close_session_mock.assert_called_once()
 
+    @mock.patch(manager_path)
     @mock.patch(connect_path)
-    def test_fail_open_when_ncclient_raises_exception(self, mock_manager_connect):
+    def test_fail_open_when_ncclient_raises_exception(self, mock_manager_connect, _):
         mock_manager_connect.side_effect = NCClientError
         self.assertRaises(OCNOSConnectionError, self.device.open)
 
+    @mock.patch(manager_path)
     @mock.patch(connect_path)
-    def test_success_close(self, mock_manager_connect):
+    def test_success_close(self, mock_manager_connect, _):
         self.device.open()
         close_session_mock = self.device._connection.close_session = mock.MagicMock()
         self.device.close()
         close_session_mock.assert_called_once()
 
+    @mock.patch(manager_path)
     @mock.patch(connect_path)
-    def test_fail_close_when_ncclient_raises_exception(self, mock_manager_connect):
+    def test_fail_close_when_ncclient_raises_exception(self, mock_manager_connect, _):
         self.device.open()
         self.device._connection.close_session.side_effect = NCClientError
         self.assertRaises(OCNOSConnectionError, self.device.close)
@@ -85,8 +91,9 @@ class TestOCNOS(unittest.TestCase):
     def test_is_alive_when_open_not_called(self):
         self.assertFalse(self.device.is_alive())
 
+    @mock.patch(manager_path)
     @mock.patch(connect_path)
-    def test_success_is_alive_when_connection_open(self, mock_manager_connect):
+    def test_success_is_alive_when_connection_open(self, mock_manager_connect, _):
         self.device.open()
         self.device._connection.connected = True
         self.assertTrue(self.device.is_alive())
@@ -102,7 +109,7 @@ class TestOCNOS(unittest.TestCase):
         self.assertRaises(OCNOSUnOpenedConnectionError, self.device.get_config)
 
     def test_fail_get_config_when_ncclinet_raises_exception(self):
-        with mock.patch(connect_path) as mock_manager_connect:
+        with mock.patch(connect_path), mock.patch(manager_path) as mock_manager_connect:
             self.device.open()
             get_config_mock = mock_manager_connect.return_value.get_config = mock.MagicMock()
             get_config_mock.side_effect = NCClientError
@@ -141,7 +148,7 @@ class TestOCNOS(unittest.TestCase):
         self.assertRaises(OCNOSUnOpenedConnectionError, self.device.commit_config)
 
     def test_fail_commit_config_when_candidate_not_in_server_capabilities(self):
-        with mock.patch(connect_path) as mock_manager_connect:
+        with mock.patch(connect_path), mock.patch(manager_path) as mock_manager_connect:
             self.device.open()
             self.device.load_candidate_config(config='<config></config>')
             self.device._connection.server_capabilities = [':validate:1.0']
@@ -150,7 +157,7 @@ class TestOCNOS(unittest.TestCase):
 
     def test_fail_commit_config_when_ncclinet_raises_exception(self):
         config = '<config></config>'
-        with mock.patch(connect_path) as mock_manager_connect:
+        with mock.patch(connect_path), mock.patch(manager_path) as mock_manager_connect:
             instance = mock_manager_connect.return_value
             instance.edit_config.side_effect = NCClientError
             self.device.open()
@@ -169,7 +176,7 @@ class TestOCNOS(unittest.TestCase):
 
     def test_success_commit_merge_config(self):
         config = '<config></config>'
-        with mock.patch(connect_path) as mock_manager_connect:
+        with mock.patch(connect_path), mock.patch(manager_path) as mock_manager_connect:
             instance = mock_manager_connect.return_value
             self.device.open()
             self.device.load_candidate_config(config=config)
@@ -195,7 +202,7 @@ class TestOCNOS(unittest.TestCase):
 
     def test_success_commit_replace_config(self):
         config = '<config></config>'
-        with mock.patch(connect_path) as mock_manager_connect:
+        with mock.patch(connect_path), mock.patch(manager_path) as mock_manager_connect:
             instance = mock_manager_connect.return_value
             self.device.open()
             self.device.load_candidate_config(config=config)
@@ -227,7 +234,7 @@ class TestOCNOS(unittest.TestCase):
         self.assertRaises(OCNOSUnOpenedConnectionError, self.device.compare_config)
 
     def test_success_compare_config(self):
-        with mock.patch(connect_path) as mock_manager_connect:
+        with mock.patch(connect_path), mock.patch(manager_path) as mock_manager_connect:
             get_config_mock = mock_manager_connect.return_value.get_config.return_value = mock.MagicMock()
             get_config_mock.data_xml = '<data><vr><vrf>1</vrf></vr></data>'
             self.device.open()
@@ -240,7 +247,7 @@ class TestOCNOS(unittest.TestCase):
             self.assertEqual('{}'.format(os.linesep).join(expected), self.device.compare_config())
 
     def test_success_get_config_for_startup(self):
-        with mock.patch(connect_path) as mock_manager_connect:
+        with mock.patch(connect_path), mock.patch(manager_path) as mock_manager_connect:
             get_config_mock = mock_manager_connect.return_value.get_config.return_value = mock.MagicMock()
             get_config_mock.data_xml = '<vr>1</vr>'
             self.device.open()
@@ -251,7 +258,7 @@ class TestOCNOS(unittest.TestCase):
             self.assertEqual(expected, self.device.get_config('startup')['startup'])
 
     def test_success_get_config_for_all_option(self):
-        with mock.patch(connect_path) as mock_manager_connect:
+        with mock.patch(connect_path), mock.patch(manager_path) as mock_manager_connect:
             get_config_mock = mock_manager_connect.return_value.get_config.return_value = mock.MagicMock()
             get_config_mock.data_xml = '<data><vr>1</vr></data>'
             self.device.open()
@@ -270,7 +277,7 @@ class TestOCNOS(unittest.TestCase):
             )
 
     def test_success_get_config_for_running(self):
-        with mock.patch(connect_path) as mock_manager_connect:
+        with mock.patch(connect_path), mock.patch(manager_path) as mock_manager_connect:
             get_config_mock = mock_manager_connect.return_value.get_config.return_value = mock.MagicMock()
             get_config_mock.data_xml = '<data><vr>1</vr></data>'
             self.device.open()
