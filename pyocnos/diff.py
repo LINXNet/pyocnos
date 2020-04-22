@@ -24,6 +24,7 @@ import re
 
 from lxml import etree
 
+from .exceptions import OCNOSCDuplicateKeyError
 from .similarity import similarity_indexes
 
 # Four supported change types are declared here.
@@ -209,10 +210,9 @@ def similarity_zip(hashelements_left, hashelements_right):
     """
     Apart from mimic the behavior of builtin zip function, this routine allows
     entries from the provided two iterable are provided in specific order, so
-    that the content in the generated tuple has the largest similarity or
-    elements in the generated tuple are having the same value of fixed key
-    child elements, with the constraint the whole similarity of the two given
-    list of xml nodes is at a max level.
+    that the content in the generated tuple has the largest similarity, with
+    the constraint the whole similarity of the two given list of xml nodes is
+    at a max level.
 
     Args:
         hashelements_left: [HashElement]
@@ -224,17 +224,44 @@ def similarity_zip(hashelements_left, hashelements_right):
         return
     elems_left = [hashelem.elem for hashelem in hashelements_left]
     elems_right = [hashelem.elem for hashelem in hashelements_right]
-    if str(elems_left[0].tag).strip() in ELEMENTS_WITH_FIXED_KEYS:
-        element = str(elems_left[0].tag).strip()
-        key = ELEMENTS_WITH_FIXED_KEYS[element]
-        keys_left = {str(item.elem.find(key).text): item for item in hashelements_left}
-        keys_right = {str(item.elem.find(key).text): item for item in hashelements_right}
-        for value in keys_left:
-            if value in keys_right:
-                yield (keys_left[value], keys_right[value])
-    else:
-        for index_left, index_right in similarity_indexes(elems_left, elems_right):
-            yield (hashelements_left[index_left], hashelements_right[index_right])
+    for index_left, index_right in similarity_indexes(elems_left, elems_right):
+        yield (hashelements_left[index_left], hashelements_right[index_right])
+
+
+def element_keys_zip(elem_tag, hashelements_left, hashelements_right):
+    """
+    Apart from mimic the behavior of builtin zip function, this routine allows
+    entries from the provided two iterable are provided in specific order, so
+    that the content in the generated tuple has the same value for the
+    specified key element.
+    It fails if two elementes in one iterable have the same key value.
+
+    Args:
+        hashelements_left: [HashElement]
+        hashelements_right: [HashElement]
+    Return:
+        a generator like zip
+    """
+    def to_key_dict(key, hash_elements):
+        result = {}
+        for item in hash_elements:
+            value = str(item.elem.find(key).text)
+            if value in result:
+                raise OCNOSCDuplicateKeyError(
+                    'The config has more elements with the same key value: '
+                    'key={}, value={}'.format(key, value))
+            result[value] = item
+        return result
+
+    if not hashelements_left or not hashelements_right:
+        return
+
+    key = ELEMENTS_WITH_FIXED_KEYS[elem_tag]
+    keys_left = to_key_dict(key, hashelements_left)
+    keys_right = to_key_dict(key, hashelements_right)
+    for value in keys_left:
+        if value in keys_right:
+            yield (keys_left[value], keys_right[value])
 
 
 def rdiff(hashelem_left, hashelem_right):
@@ -276,7 +303,12 @@ def rdiff(hashelem_left, hashelem_right):
         filtered_elems_left = [x for x in hashed_elements_left if x.elem.tag == tag]
         filtered_elems_right = [x for x in hashed_elements_right if x.elem.tag == tag]
 
-        for hashelem_l, hashelem_r in similarity_zip(filtered_elems_left, filtered_elems_right):
+        if tag in ELEMENTS_WITH_FIXED_KEYS:
+            element_tuples = element_keys_zip(tag, filtered_elems_left, filtered_elems_right)
+        else:
+            element_tuples = similarity_zip(filtered_elems_left, filtered_elems_right)
+
+        for hashelem_l, hashelem_r in element_tuples:
             if has_children(hashelem_l.elem) and has_children(hashelem_r.elem):
                 deeper_diff = rdiff(hashelem_l, hashelem_r)
                 for change_type in deeper_diff:
