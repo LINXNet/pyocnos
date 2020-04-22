@@ -2,6 +2,7 @@
 Class to communicate with devices running OcNOS operating system
 """
 from binascii import hexlify
+import functools
 import logging
 import os
 # todo: Remove this once Ipinfusion have fix issue on as5812 switches for timeout
@@ -25,6 +26,17 @@ from pyocnos.exceptions import OCNOSNoCandidateConfigError
 from pyocnos.exceptions import OCNOSUnableToRetrieveConfigError
 from pyocnos.exceptions import OCNOSUnOpenedConnectionError
 from pyocnos.input import query_yes_no
+
+
+class DefaultManager(manager.Manager):
+    """Class extending ncclient default Manager class to preffer
+    default netconf operations instead of vendor specific operations.
+    """
+    # pylint: disable=abstract-method
+    def __getattr__(self, method):
+        if method in manager.OPERATIONS:
+            return functools.partial(self.execute, manager.OPERATIONS[method])
+        return super().__getattr__(method)
 
 
 class PromptPolicy(paramiko.MissingHostKeyPolicy):
@@ -157,8 +169,14 @@ class OCNOS(object):
         """
         allow_agent = bool(self.password is None)
 
+        # Because of the bug in ncclient it's not possible to connect to
+        # multiple vendors from one python app (the vendor specific operations
+        # are globally set and used by all connections)
+        # OCNOS uses standard netconf operations, so using workaround with
+        # DefaultManager class to temporarily fix the issue
+        # ncclient github issue - https://github.com/ncclient/ncclient/issues/386
         try:
-            self._connection = manager.connect(
+            built_in_manager = manager.connect(
                 host=self.hostname,
                 port=self.port,
                 username=self.username,
@@ -166,8 +184,12 @@ class OCNOS(object):
                 timeout=self.timeout,
                 look_for_keys=False,
                 allow_agent=allow_agent,
-                unknown_host_cb=get_unknown_host_cb(self)
+                unknown_host_cb=get_unknown_host_cb(self),
             )
+            # pylint: disable=protected-access
+            self._connection = DefaultManager(built_in_manager._session,
+                                              built_in_manager._device_handler,
+                                              built_in_manager._timeout)
             # todo: Remove this once Ipinfusion have fix issue on as5812 switches for timeout
             sleep(2)
         except NCClientError as ncclient_exception:
