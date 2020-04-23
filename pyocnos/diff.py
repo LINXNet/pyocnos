@@ -35,6 +35,9 @@ REMOVED = 'removed'
 SAME = 'same'
 DIFF_SYMBOLS = {MOVED: '!', ADDED: '+', REMOVED: '-'}
 # mapping of xml elements to its child to use as a key in diff comparison
+# keys for list elements are defined in the schema files
+# (https://github.com/IPInfusion/OcNOS/tree/1.3.8.151/yang-files/trident2plus/DC_IPBASE)
+# or in response from 'get-schema' RPC call
 ELEMENTS_WITH_FIXED_KEYS = {
     'interface': 'ifName',
     'accessListMac': 'aclNameMAC',
