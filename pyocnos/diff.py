@@ -24,6 +24,7 @@ import re
 
 from lxml import etree
 
+from .exceptions import OCNOSCDuplicateKeyError
 from .similarity import similarity_indexes
 
 # Four supported change types are declared here.
@@ -33,6 +34,16 @@ MOVED = 'moved'
 REMOVED = 'removed'
 SAME = 'same'
 DIFF_SYMBOLS = {MOVED: '!', ADDED: '+', REMOVED: '-'}
+# mapping of xml elements to its child to use as a key in diff comparison
+# keys for list elements are defined in the schema files
+# (https://github.com/IPInfusion/OcNOS/tree/1.3.8.151/yang-files/trident2plus/DC_IPBASE)
+# or in response from 'get-schema' RPC call
+ELEMENTS_WITH_FIXED_KEYS = {
+    'interface': 'ifName',
+    'accessListMac': 'aclNameMAC',
+    'filterList': 'accessNumFL',
+    'nvoAccessIfVlanInfo': 'vlanId',
+}
 
 # Data structure to pair an xml element and its hash.
 HashElement = namedtuple('HashElement', ['hash', 'elem'])
@@ -220,6 +231,41 @@ def similarity_zip(hashelements_left, hashelements_right):
         yield (hashelements_left[index_left], hashelements_right[index_right])
 
 
+def element_keys_zip(elem_tag, hashelements_left, hashelements_right):
+    """
+    Apart from mimic the behavior of builtin zip function, this routine allows
+    entries from the provided two iterable are provided in specific order, so
+    that the content in the generated tuple has the same value for the
+    specified key element.
+    It fails if two elementes in one iterable have the same key value.
+
+    Args:
+        hashelements_left: [HashElement]
+        hashelements_right: [HashElement]
+    Return:
+        a generator like zip
+    """
+    def to_key_dict(key, hash_elements):
+        result = {}
+        for item in hash_elements:
+            value = str(item.elem.find(key).text).strip()
+            if value in result:
+                raise OCNOSCDuplicateKeyError(
+                    'The config has more elements with the same key value: '
+                    'key={}, value={}'.format(key, value))
+            result[value] = item
+        return result
+
+    if not hashelements_left or not hashelements_right:
+        return
+
+    sorting_key = ELEMENTS_WITH_FIXED_KEYS[elem_tag]
+    keys_left = to_key_dict(sorting_key, hashelements_left)
+    keys_right = to_key_dict(sorting_key, hashelements_right)
+    for key in set(keys_left) & set(keys_right):
+        yield (keys_left[key], keys_right[key])
+
+
 def rdiff(hashelem_left, hashelem_right):
     """
     Recursively create diff information between two elements provided in arguments.
@@ -259,7 +305,12 @@ def rdiff(hashelem_left, hashelem_right):
         filtered_elems_left = [x for x in hashed_elements_left if x.elem.tag == tag]
         filtered_elems_right = [x for x in hashed_elements_right if x.elem.tag == tag]
 
-        for hashelem_l, hashelem_r in similarity_zip(filtered_elems_left, filtered_elems_right):
+        if tag in ELEMENTS_WITH_FIXED_KEYS:
+            element_tuples = element_keys_zip(tag, filtered_elems_left, filtered_elems_right)
+        else:
+            element_tuples = similarity_zip(filtered_elems_left, filtered_elems_right)
+
+        for hashelem_l, hashelem_r in element_tuples:
             if has_children(hashelem_l.elem) and has_children(hashelem_r.elem):
                 deeper_diff = rdiff(hashelem_l, hashelem_r)
                 for change_type in deeper_diff:
