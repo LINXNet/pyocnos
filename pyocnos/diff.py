@@ -245,7 +245,7 @@ def element_keys_zip(elem_tag, hashelements_left, hashelements_right):
     def to_key_dict(key, hash_elements):
         result = {}
         for item in hash_elements:
-            value = str(item.elem.find(key).text)
+            value = str(item.elem.find(key).text).strip()
             if value in result:
                 raise OCNOSCDuplicateKeyError(
                     'The config has more elements with the same key value: '
@@ -256,12 +256,11 @@ def element_keys_zip(elem_tag, hashelements_left, hashelements_right):
     if not hashelements_left or not hashelements_right:
         return
 
-    key = ELEMENTS_WITH_FIXED_KEYS[elem_tag]
-    keys_left = to_key_dict(key, hashelements_left)
-    keys_right = to_key_dict(key, hashelements_right)
-    for value in keys_left:
-        if value in keys_right:
-            yield (keys_left[value], keys_right[value])
+    sorting_key = ELEMENTS_WITH_FIXED_KEYS[elem_tag]
+    keys_left = to_key_dict(sorting_key, hashelements_left)
+    keys_right = to_key_dict(sorting_key, hashelements_right)
+    for key in set(keys_left) & set(keys_right):
+        yield (keys_left[key], keys_right[key])
 
 
 def rdiff(hashelem_left, hashelem_right):
