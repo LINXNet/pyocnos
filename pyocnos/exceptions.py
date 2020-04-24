@@ -112,3 +112,9 @@ class OCNOSCandidateConfigInvalidError(OCNOSError):
     """
     Exception class when candidate config is invalid
     """
+
+
+class OCNOSCDuplicateKeyError(OCNOSError):
+    """
+    Exception class when config contains elements with the same key
+    """
