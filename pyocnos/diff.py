@@ -43,7 +43,7 @@ DIFF_SYMBOLS = {MOVED: '!', ADDED: '+', REMOVED: '-'}
 ELEMENTS_WITH_FIXED_KEYS = {
     'interface': 'ifName',
     'accessListMac': 'aclNameMAC',
-    'filterList': 'accessNumFL',
+    'filterList': 'sMacFM',
     'nvoAccessIfVlanInfo': 'vlanId',
 }
 
