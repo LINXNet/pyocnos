@@ -1,7 +1,9 @@
 """
-This module allows comparison between two xml trees. The generated diff shows all added or removed xml elements, from a
-"right" tree against a "left" tree. It ignores identical elements in different order with siblings. The module also
-does not count a lot aspects, e.g. name spaces, attributes, white spaces and any invisible characters, etc.
+This module allows comparison between two xml trees. The generated diff shows
+all added or removed xml elements, from a "right" tree against a "left" tree.
+It ignores identical elements in different order with siblings. The module also
+does not count a lot aspects, e.g. name spaces, attributes, white spaces and
+any invisible characters, etc.
 
 Usage:
  > from pyocnos.diff import build_xml_diff
