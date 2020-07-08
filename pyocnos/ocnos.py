@@ -1,10 +1,8 @@
 """
 Class to communicate with devices running OcNOS operating system
 """
-from binascii import hexlify
 import functools
 import logging
-import os
 # todo: Remove this once Ipinfusion have fix issue on as5812 switches for timeout
 from time import sleep
 
@@ -12,7 +10,6 @@ from future.utils import raise_from
 import lxml
 from ncclient import manager
 from ncclient import NCClientError
-import paramiko
 
 from pyocnos import LOGGER_NAME
 from pyocnos.diff import build_xml_diff
@@ -25,11 +22,11 @@ from pyocnos.exceptions import OCNOSLoadCandidateConfigFileReadError
 from pyocnos.exceptions import OCNOSNoCandidateConfigError
 from pyocnos.exceptions import OCNOSUnableToRetrieveConfigError
 from pyocnos.exceptions import OCNOSUnOpenedConnectionError
-from pyocnos.input import query_yes_no
 
 
 class DefaultManager(manager.Manager):
-    """Class extending ncclient default Manager class to preffer
+    """
+    Class extending ncclient default Manager class to prefer
     default netconf operations instead of vendor specific operations.
     """
     # pylint: disable=abstract-method
@@ -37,79 +34,6 @@ class DefaultManager(manager.Manager):
         if method in manager.OPERATIONS:
             return functools.partial(self.execute, manager.OPERATIONS[method])
         return super().__getattr__(method)
-
-
-class PromptPolicy(paramiko.MissingHostKeyPolicy):
-    # pylint: disable=too-few-public-methods
-    """
-    Policy for prompting the user to add the host to known hosts.
-
-    Snippets taken from paramiko.AutoAddPolicy, paramiko.RejectPolicy
-    """
-    def missing_host_key(self, client, hostname, key):
-        # pylint: disable=protected-access
-        key_name = key.get_name()
-        fingerprint = hexlify(key.get_fingerprint())
-
-        accept = query_yes_no('Unknown fingerprint of host %s.\n'
-                              'The %s fingerprint is %s.\n'
-                              'Do you wish to continue with the connection?'
-                              % (hostname, key_name, fingerprint))
-        if not accept:
-            client._log(
-                logging.DEBUG,
-                "Rejecting {} host key for {}: {}".format(
-                    key_name, hostname, fingerprint
-                ),
-            )
-            raise paramiko.SSHException(
-                "Server {!r} not found in known_hosts".format(hostname)
-            )
-
-        client._host_keys.add(hostname, key_name, key)
-        if client._host_keys_filename is not None:
-            client.save_host_keys(client._host_keys_filename)
-        client._log(
-            logging.DEBUG,
-            "Adding {} host key for {}: {}".format(
-                key_name, hostname, fingerprint
-            ),
-        )
-
-
-def get_unknown_host_cb(ocnos):
-    """
-    Wrapper to return real callback so as ocnos properties can be accessed
-
-    Args:
-        ocnos:      instance of OCNOS class
-
-    Returns:        unknown_host_cb function
-    """
-    def unknown_host_cb(host, fingerprint):
-        """
-        Called when there is an unknown host fingerprint
-
-        Args:
-            host:               (str) hostname
-            fingerprint:        (str) RSA key fingerprint
-
-        Returns:                (bool) Accept the fingerprint?
-        """
-        with paramiko.SSHClient() as ssh_client:
-            keys_path = os.path.expanduser("~/.ssh/known_hosts")
-            ssh_client.load_host_keys(keys_path)
-            ssh_client.set_missing_host_key_policy(PromptPolicy)
-            try:
-                ssh_client.connect(host, username=ocnos.username,
-                                   password=ocnos.password,
-                                   port=ocnos.port,
-                                   look_for_keys=False)
-                ssh_client.close()
-            except paramiko.SSHException:
-                return False
-        return True
-    return unknown_host_cb
 
 
 class OCNOS(object):
@@ -184,7 +108,7 @@ class OCNOS(object):
                 timeout=self.timeout,
                 look_for_keys=False,
                 allow_agent=allow_agent,
-                unknown_host_cb=get_unknown_host_cb(self),
+                hostkey_verify=False,
             )
             # pylint: disable=protected-access
             self._connection = DefaultManager(built_in_manager._session,
