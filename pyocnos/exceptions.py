@@ -8,22 +8,35 @@ class OCNOSError(Exception):
     """ OcNOS Exception """
     def __init__(self, msg='', ncclient_exc=None):
         if ncclient_exc is not None and isinstance(ncclient_exc, RPCError):
+            if hasattr(ncclient_exc, 'errors'):
+                # Received multiple ncclient errors
+                netconf_errors = ncclient_exc.errors
+            else:
+                netconf_errors = [ncclient_exc]
+            netconf_msgs = []
+            for error in netconf_errors:
+                netconf_msgs.append(
+                    'rpc-error:\n'
+                    '    error-tag: {}\n'
+                    '    error-path: {}\n'
+                    '    error-message: {}\n'
+                    '    error-info:\n'
+                    '    {}'.format(
+                        # The internal attributes in RPCError class for
+                        # its properties, "tag", "path", etc. might be
+                        # unavailable since they are all set at run time
+                        # depending on rpc error.
+                        getattr(error, '_tag', ''),
+                        getattr(error, '_path', ''),
+                        getattr(error, '_message', ''),
+                        getattr(error, '_info', '')
+                    )
+                )
+
             error_msg = ('{}\n'
-                         'rpc-error:\n'
-                         '    error-tag: {}\n'
-                         '    error-path: {}\n'
-                         '    error-message: {}\n'
-                         '    error-info:\n'
-                         '    {}'.format(
+                         '{}'.format(
                              msg,
-                             # The internal attributes in RPCError class for
-                             # its properties, "tag", "path", etc. might be
-                             # unavailable since they are all set at run time
-                             # depending on rpc error.
-                             getattr(ncclient_exc, '_tag', ''),
-                             getattr(ncclient_exc, '_path', ''),
-                             getattr(ncclient_exc, '_message', ''),
-                             getattr(ncclient_exc, '_info', '')
+                             '\n'.join(netconf_msgs)
                          ))
         else:
             error_msg = msg
