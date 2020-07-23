@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 with open('requirements.txt', 'r') as requirements:
     install_requires = [line.strip() for line in requirements if line and not line.startswith('#')]
 
-version = '0.5.11'
+version = '0.5.12'
 setup(
     name='pyocnos',
     version=version,
