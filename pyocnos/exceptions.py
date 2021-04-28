@@ -41,7 +41,7 @@ class OCNOSError(Exception):
         else:
             error_msg = msg
 
-        super(OCNOSError, self).__init__(error_msg)
+        super().__init__(error_msg)
 
 
 class OCNOSUnOpenedConnectionError(OCNOSError):
@@ -51,7 +51,7 @@ class OCNOSUnOpenedConnectionError(OCNOSError):
 
     def __init__(self):
         message = 'Please open a connection first using the open().'
-        super(OCNOSUnOpenedConnectionError, self).__init__(message)
+        super().__init__(message)
 
 
 class OCNOSConnectionError(OCNOSError):
@@ -79,7 +79,7 @@ class OCNOSNoCandidateConfigError(OCNOSError):
 
     def __init__(self):
         message = "Please provide 'filename' or 'config' attribute"
-        super(OCNOSNoCandidateConfigError, self).__init__(message)
+        super().__init__(message)
 
 
 class OCNOSLoadCandidateConfigFileReadError(OCNOSError):
@@ -89,10 +89,7 @@ class OCNOSLoadCandidateConfigFileReadError(OCNOSError):
 
     def __init__(self):
         message = "Unable to read file"
-        super(
-            OCNOSLoadCandidateConfigFileReadError,
-            self
-        ).__init__(message)
+        super().__init__(message)
 
 
 class OCNOSCandidateConfigNotLoadedError(OCNOSError):
@@ -102,10 +99,7 @@ class OCNOSCandidateConfigNotLoadedError(OCNOSError):
 
     def __init__(self):
         message = "No candidate config loaded use load_candidate_config func"
-        super(
-            OCNOSCandidateConfigNotLoadedError,
-            self
-        ).__init__(message)
+        super().__init__(message)
 
 
 class OCNOSCandidateConfigNotInServerCapabilitiesError(OCNOSError):
@@ -115,10 +109,7 @@ class OCNOSCandidateConfigNotInServerCapabilitiesError(OCNOSError):
 
     def __init__(self):
         message = "Candidate config not in server capabilities"
-        super(
-            OCNOSCandidateConfigNotInServerCapabilitiesError,
-            self
-        ).__init__(message)
+        super().__init__(message)
 
 
 class OCNOSCandidateConfigInvalidError(OCNOSError):
