@@ -303,6 +303,7 @@ class OCNOS(object):
         return build_xml_diff(self._get_config_from_device('running'),
                               lxml.etree.tostring(self._candidate_config, encoding='UTF-8'))
 
+    # pylint: disable=inconsistent-return-statements
     def _get_config_from_device(self, config_name):
         """
         Get config from device depending on config name

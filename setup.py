@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 with open('requirements.txt', 'r') as requirements:
     install_requires = [line.strip() for line in requirements if line and not line.startswith('#')]
 
-version = '0.5.12'
+version = '0.5.13'
 setup(
     name='pyocnos',
     version=version,
@@ -21,7 +21,10 @@ setup(
     url='https://github.com/LINXNet/pyocnos/',
     download_url='https://github.com/LINXNet/pyocnos/tarball/%s' % version,
     keywords=['OcNOS', 'networking'],
-    classifiers=[],
+    classifiers=[
+         'Programming Language :: Python :: 3'
+     ],
+    python_requires='~=3.0',
     entry_points={
         'console_scripts': ['pyocnos=pyocnos.command_line:main'],
     }
