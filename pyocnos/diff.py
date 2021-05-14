@@ -46,6 +46,9 @@ ELEMENTS_WITH_FIXED_KEYS = {
     'filterList': 'sMacFM',
     'nvoAccessIfVlanInfo': 'vlanId',
 }
+ELEMENTS_WITH_FIXED_KEYS_EXTRA = {
+    'filterList': 'vlanFM',
+}
 
 # Data structure to pair an xml element and its hash.
 HashElement = namedtuple('HashElement', ['hash', 'elem'])
@@ -247,14 +250,19 @@ def element_keys_zip(elem_tag, hashelements_left, hashelements_right):
     Return:
         a generator like zip
     """
-    def to_key_dict(key, hash_elements):
+    def to_key_dict(key, hash_elements, key2=None):
         result = {}
+        value2 = None
         for item in hash_elements:
             value = str(item.elem.find(key).text).strip()
+            if key2:
+                value2 = str(item.elem.find(key2).text).strip()
+                if value2:
+                    value = (value, value2)
             if value in result:
                 raise OCNOSCDuplicateKeyError(
                     'The config has more elements with the same key value: '
-                    'key={}, value={}'.format(key, value))
+                    'key={}, value={}'.format((key, key2), value))
             result[value] = item
         return result
 
@@ -262,8 +270,9 @@ def element_keys_zip(elem_tag, hashelements_left, hashelements_right):
         return
 
     sorting_key = ELEMENTS_WITH_FIXED_KEYS[elem_tag]
-    keys_left = to_key_dict(sorting_key, hashelements_left)
-    keys_right = to_key_dict(sorting_key, hashelements_right)
+    sorting_key2 = ELEMENTS_WITH_FIXED_KEYS_EXTRA.get(elem_tag)
+    keys_left = to_key_dict(sorting_key, hashelements_left, key2=sorting_key2)
+    keys_right = to_key_dict(sorting_key, hashelements_right, key2=sorting_key2)
     for key in set(keys_left) & set(keys_right):
         yield (keys_left[key], keys_right[key])
 
