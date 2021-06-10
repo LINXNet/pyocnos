@@ -41,13 +41,10 @@ DIFF_SYMBOLS = {MOVED: '!', ADDED: '+', REMOVED: '-'}
 # (https://github.com/IPInfusion/OcNOS/tree/1.3.8.151/yang-files/trident2plus/DC_IPBASE)
 # or in response from 'get-schema' RPC call
 ELEMENTS_WITH_FIXED_KEYS = {
-    'interface': 'ifName',
-    'accessListMac': 'aclNameMAC',
-    'filterList': 'sMacFM',
-    'nvoAccessIfVlanInfo': 'vlanId',
-}
-ELEMENTS_WITH_FIXED_KEYS_EXTRA = {
-    'filterList': 'vlanFM',
+    'interface': [('ifName',)],
+    'accessListMac': [('aclNameMAC',)],
+    'filterList': [('sMacFM', 'vlanFM'), ('<sIpFC>', '<vlanFC>'), ('<accessNumFL>',)],
+    'nvoAccessIfVlanInfo': [('vlanId',)],
 }
 
 # Data structure to pair an xml element and its hash.
@@ -250,21 +247,31 @@ def element_keys_zip(elem_tag, hashelements_left, hashelements_right):
     Return:
         a generator like zip
     """
-    def to_key_dict(key, hash_elements, key2=None):
+    def to_key_dict(key, hash_elements):
         result = {}
-        value2 = None
         for item in hash_elements:
-            value = str(item.elem.find(key).text).strip()
-            if key2:
-                elem2 = item.elem.find(key2)
-                if elem2:
-                    value2 = str(elem2.text).strip()
-                    if value2:
-                        value = (value, value2)
+            item_key = []
+            for key_option in key:
+                elem = item.elem.find(key_option[0])
+                if elem is not None:
+                    item_key = key_option
+                    break
+            else:
+                # Indicating no key elements were found
+                return None
+
+            value = tuple()
+            for key_element in item_key:
+                elem = item.elem.find(key_element)
+                if elem is not None:
+                    value2 = str(elem.text).strip()
+                else:
+                    value2 = None
+                value = value + (value2,)
             if value in result:
                 raise OCNOSCDuplicateKeyError(
                     'The config has more elements with the same key value: '
-                    'key={}, value={}'.format((key, key2), value))
+                    'key={}, value={}'.format(item_key, value))
             result[value] = item
         return result
 
@@ -272,11 +279,14 @@ def element_keys_zip(elem_tag, hashelements_left, hashelements_right):
         return
 
     sorting_key = ELEMENTS_WITH_FIXED_KEYS[elem_tag]
-    sorting_key2 = ELEMENTS_WITH_FIXED_KEYS_EXTRA.get(elem_tag)
-    keys_left = to_key_dict(sorting_key, hashelements_left, key2=sorting_key2)
-    keys_right = to_key_dict(sorting_key, hashelements_right, key2=sorting_key2)
-    for key in set(keys_left) & set(keys_right):
-        yield (keys_left[key], keys_right[key])
+    keys_left = to_key_dict(sorting_key, hashelements_left)
+    keys_right = to_key_dict(sorting_key, hashelements_right)
+    if keys_left is None or keys_right is None:
+        # Indicating no key elements were found
+        yield from similarity_zip(hashelements_left, hashelements_right)
+    else:
+        for key in set(keys_left) & set(keys_right):
+            yield (keys_left[key], keys_right[key])
 
 
 def rdiff(hashelem_left, hashelem_right):
