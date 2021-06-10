@@ -128,12 +128,12 @@ def similarity_element(elem_a, elem_b):
 
     similarity_v = similarity_value(elem_a, elem_b)
 
-    if not elem_a and not elem_b:
+    if len(elem_a) == 0 and len(elem_b) == 0:
         if similarity_v:
             return similarity_v
         return A_INFINITESIMAL_SIMILARITY
 
-    if not elem_a or not elem_b:
+    if len(elem_a) == 0 or len(elem_b) == 0:
         return A_INFINITESIMAL_SIMILARITY
 
     return similarity_array(elem_a, elem_b)
