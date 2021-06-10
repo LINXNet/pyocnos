@@ -256,9 +256,11 @@ def element_keys_zip(elem_tag, hashelements_left, hashelements_right):
         for item in hash_elements:
             value = str(item.elem.find(key).text).strip()
             if key2:
-                value2 = str(item.elem.find(key2).text).strip()
-                if value2:
-                    value = (value, value2)
+                elem2 = item.elem.find(key2)
+                if elem2:
+                    value2 = str(elem2.text).strip()
+                    if value2:
+                        value = (value, value2)
             if value in result:
                 raise OCNOSCDuplicateKeyError(
                     'The config has more elements with the same key value: '
