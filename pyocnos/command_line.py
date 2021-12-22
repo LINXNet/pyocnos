@@ -30,7 +30,7 @@ def process(config_file_path, hostname, actions, save_config_file_path, candidat
     Returns: (List) of Strings showing user what actions were taken
 
     """
-    with open(config_file_path, 'r') as yml_file:
+    with open(config_file_path, 'r', encoding='utf-8') as yml_file:
         config = yaml.safe_load(yml_file)
 
     username = config['config']['username']
@@ -56,7 +56,7 @@ def process(config_file_path, hostname, actions, save_config_file_path, candidat
 
             elif action in ['running', 'startup']:
                 save_config_file_path = save_config_file_path or '{}-{}.xml'.format(hostname, action)
-                with io.open(save_config_file_path, 'w') as xml_file:
+                with io.open(save_config_file_path, 'w', encoding='utf-8') as xml_file:
                     xml_file.write(device.get_config(action)[action])
                 output.append('Devices {} config xml stored in {}'.format(action.capitalize(), save_config_file_path))
 
