@@ -4,6 +4,7 @@ This test module covers tests cases for function pyocnos.diff.rrender()
 # pylint: disable=invalid-name
 
 import pytest
+import pyocnos
 from pyocnos.diff import normalize_tree, rrender
 
 
@@ -32,11 +33,7 @@ def test_rrender_no_changes_at_all():
         </data>
     """)
 
-    assert rrender(tree_diff) == \
-        [
-            '[data]',
-            '  <foo>...</foo>'
-        ]
+    assert rrender(tree_diff) == []
 
     tree_diff = normalize_tree("""
         <data>
@@ -47,12 +44,7 @@ def test_rrender_no_changes_at_all():
         </data>
     """)
 
-    assert rrender(tree_diff) == \
-        [
-            '[data]',
-            '  <foo>...</foo>',
-            '  <loo>200</loo>'
-        ]
+    assert rrender(tree_diff) == []
 
     tree_diff = normalize_tree("""
         <data>
@@ -65,13 +57,7 @@ def test_rrender_no_changes_at_all():
         </data>
     """)
 
-    assert rrender(tree_diff) == \
-        [
-            '[data]',
-            '  <foo>...</foo>',
-            '  ...',
-            '  <rid>400</rid>'
-        ]
+    assert rrender(tree_diff) == []
 
 
 def test_rrender_multiple_changes():
@@ -79,6 +65,7 @@ def test_rrender_multiple_changes():
     Scenario: in a diff tree, an added element has + decorated in the front whilst
     an removed element has - decorated. And unchanged elements are collapsed.
     """
+    pyocnos.diff.ELEMENTS_WITH_FIXED_KEYS = {'data': [('foo',)]}
     tree_diff = normalize_tree("""
         <data>
             <foo>100</foo>
@@ -99,16 +86,10 @@ def test_rrender_multiple_changes():
     expected = [
         '[data]',
         '  <foo>100</foo>',
-        '  <bar>200</bar>',
         '  [loo]',
         '+   <lit>300</lit>',
-        '    <pat>400</pat>',
-        '    ...',
-        '    <nil>600</nil>',
         '    [rah]',
         '-     <ght>700</ght>',
-        '      <xla>800</xla>',
-        '  <qba>900</qba>',
     ]
 
     assert rrender(tree_diff) == expected

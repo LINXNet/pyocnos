@@ -21,6 +21,7 @@ from __future__ import print_function
 from collections import defaultdict, namedtuple
 from copy import deepcopy
 import hashlib
+import itertools
 import os
 import re
 
@@ -397,60 +398,15 @@ def rrender(tree_diff, indent_initial=0):
 
     Returns: a string representation of the diff tree
     """
-    def collaps_factory(indent):
-        """
-        This internal function maintains a list of unchanged elements before a change is hit.
-        When this function is called, it provides two function to access this list, one to add element in and one to
-        render the list into a collapsed form before it reset the list.
-
-        Args:
-            indent: number of white spaces as indention for all unchanged elements
-
-        Returns:
-            collapse: function to add an unchanged element
-            close_collaps: function to collapse the element list so far
-        """
-        elems = []
-
-        def close_collaps():
-            """
-            This function renders the element list in a collapsed form.
-
-            Returns: collapsed element list
-            """
-            if len(elems) <= 2:
-                collapsed_elems = list(elems)
-            else:
-                collapsed_elems = [elems[0], '{}...'.format(' '*indent), elems[-1]]
-
-            elems[:] = []
-            return collapsed_elems
-
-        def collapse(elem):
-            """
-            This function adds the provided element into the list inside the closure.
-
-            Args:
-                elem: lxml.etree.Element
-
-            Return: None
-            """
-            if has_children(elem):
-                elems.append('{0}<{1}>...</{1}>'.format(' ' * indent, elem.tag))
-            else:
-                elems.append('{}{}'.format(' '*indent, etree.tostring(elem).decode('utf-8')))
-
-        return collapse, close_collaps
-
     if not has_children(tree_diff):
         raise ValueError('A diff tree without any children is not supported.')
 
+    if not has_changed_children(tree_diff):
+        return []
+
     result = ['{}[{}]'.format(' '*indent_initial, tree_diff.tag)]
-    collaps_start, collapse_finish = collaps_factory(indent_initial+2)
     for elem in tree_diff:
         if elem.get('change'):
-            result.extend(collapse_finish())
-
             change_type = elem.attrib.pop('change')
             symbol = DIFF_SYMBOLS[change_type]
 
@@ -462,13 +418,13 @@ def rrender(tree_diff, indent_initial=0):
             elem.attrib['change'] = change_type
 
         elif has_changed_children(elem):
-            result.extend(collapse_finish())
             result.extend(rrender(elem, indent_initial+2))
 
         else:
-            collaps_start(elem)
-
-    result.extend(collapse_finish())
+            parent_keys = itertools.chain(
+                *ELEMENTS_WITH_FIXED_KEYS.get(tree_diff.tag, []))
+            if elem.tag in parent_keys:
+                result.append('{}{}'.format(' '*(indent_initial+2), etree.tostring(elem).decode('utf-8')))
 
     return result
 

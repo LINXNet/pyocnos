@@ -133,12 +133,9 @@ def test_diff_duplicated_elements():
     # It is designed to treat the first duplicated element as the removed one.
     expected = os.linesep.join([
         '[data]',
-        '  <foo>100</foo>',
         '- <foo>100</foo>',
         '  [bar]',
         '    [lar]',
-        '      <col>200</col>',
-        # and the last duplicated element as the added one.
         '+     <col>200</col>'
     ])
 
@@ -255,7 +252,6 @@ def test_diff_elements_same_tag_simple():
       '[data]',
       '  [baj]',
       '    [xin]',
-      '      <hos>10.10.10.10</hos>',
       '+     <foo>xyz</foo>',
       '!   <xin>',
       '!     <hos>20.20.20.20</hos>',
@@ -324,7 +320,6 @@ def test_diff_elements_same_tag_advanced():
       '[data]',
       '  [baj]',
       '    [xin]',
-      '      <hos>10.10.10.10</hos>',
       '-     <foo>abc</foo>',
       '+     <foo>xyz</foo>',
       '    [xin]',
@@ -440,7 +435,6 @@ def test_diff_child_tree_changes():
         '-     </eol>',
         '!     <elk>500</elk>',
         '  [gen]',
-        '    <haa>300</haa>',
         '+   <mia>',
         '+     <nil>400</nil>',
         '+   </mia>',
@@ -484,12 +478,10 @@ def test_diff_same_tag_move_addition():
     """
     expected = os.linesep.join([
         '[data]',
-        '  <foo>100</foo>',
         '! <lat>100</lat>',
         '  [loo]',
         '!   <dob>300</dob>',
         '+   <dob>200</dob>',
-        '    <lat>400</lat>',
         '+ <bar>200</bar>',
     ])
 
@@ -552,22 +544,13 @@ def test_diff_collapse_same_elements_among_diff():
     """
     expected = os.linesep.join([
         '[data]',
-        '  <foo>100</foo>',
         '- <bar>200</bar>',
         '+ <bar>20</bar>',
-        '  <coh>300</coh>',
-        '  <deb>400</deb>',
         '  [fan]',
         '    [lol]',
         '      [mia]',
-        '        <noh>900</noh>',
-        '        ...',
-        '        <pee>2000</pee>',
         '-       <qre>3000</qre>',
         '+       <qre>30</qre>',
-        '  <eol>500</eol>',
-        '  ...',
-        '  <jad>800</jad>'
     ])
 
     assert build_xml_diff(xmlstring_left, xmlstring_right) == expected
