@@ -329,7 +329,9 @@ def rdiff(hashelem_left, hashelem_right):
         filtered_elems_left = [x for x in hashed_elements_left if x.elem.tag == tag]
         filtered_elems_right = [x for x in hashed_elements_right if x.elem.tag == tag]
 
-        if tag in ELEMENTS_WITH_FIXED_KEYS:
+        if len(filtered_elems_left) == len(filtered_elems_right) == 1:
+            element_tuples = [(filtered_elems_left[0], filtered_elems_right[0])]
+        elif tag in ELEMENTS_WITH_FIXED_KEYS:
             element_tuples = element_keys_zip(tag, filtered_elems_left, filtered_elems_right)
         else:
             element_tuples = similarity_zip(filtered_elems_left, filtered_elems_right)
