@@ -157,7 +157,7 @@ def similarity_array(iter_a, iter_b):
     # Bear in mind the matrix returned from hungarian algorithm is distnacee
     # (i.e. cost actually) but we need similarity here.
     similarity_sum = (min(len(iter_a), len(iter_b))
-                      - sum([matrix[row][column] for row, column in indexes]))
+                      - sum(matrix[row][column] for row, column in indexes))
     return similarity_sum/max(len(iter_a), len(iter_b))
 
 
