@@ -36,7 +36,7 @@ class DefaultManager(manager.Manager):
         return super().__getattr__(method)
 
 
-class OCNOS(object):
+class OCNOS:
     # pylint: disable=too-many-instance-attributes
     """ Class to instantiate a OcNOS device """
 
@@ -206,7 +206,7 @@ class OCNOS(object):
         """
         if filename is None and config is None:
             raise OCNOSNoCandidateConfigError
-        elif filename:
+        if filename:
             try:
                 self._candidate_config = lxml.etree.parse(
                     str(filename),
