@@ -139,11 +139,17 @@ class OCNOS:
             )
             self._connection.dispatch(rpc_elem)
         except NCClientError as ncclient_exception:
-            self.log.error('Error', exc_info=True)
-            raise_from(
-                OCNOSBasicModeError('Unable to set basic mode to trim.', ncclient_exception),
-                ncclient_exception
-            )
+            if str(ncclient_exception) == 'definition not found':
+                self.log.info(
+                    'The set-default-handling-basic-mode not supported on this'
+                    ' version of Ocnos.'
+                )
+            else:
+                self.log.error('Error', exc_info=True)
+                raise_from(
+                    OCNOSBasicModeError('Unable to set basic mode to trim.', ncclient_exception),
+                    ncclient_exception
+                )
         else:
             self.log.info(
                 "Successfully set-default-handling-basic-mode to trim."
