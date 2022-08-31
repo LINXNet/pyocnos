@@ -42,10 +42,16 @@ DIFF_SYMBOLS = {MOVED: '!', ADDED: '+', REMOVED: '-'}
 # (https://github.com/IPInfusion/OcNOS/tree/1.3.8.151/yang-files/trident2plus/DC_IPBASE)
 # or in response from 'get-schema' RPC call
 ELEMENTS_WITH_FIXED_KEYS = {
-    'interface': [('ifName',)],
+    'interface': [('ifName',), ('name',)],
     'accessListMac': [('aclNameMAC',)],
     'filterList': [('sMacFM', 'vlanFM', 'packetFormatFM'), ('<sIpFC>', '<vlanFC>'), ('<accessNumFL>',)],
     'nvoAccessIfVlanInfo': [('vlanId',)],
+    'acl-set': [('name',)],
+    'acl-entry': [('sequence-id',)],
+    'config': [('source-mac-host', 'vlan-id',
+                'ethertype',),  # for acl-entry/mac/config
+               ('vlan-identifier',)  # for tagged-access-interface/config
+               ],
 }
 
 # Data structure to pair an xml element and its hash.
