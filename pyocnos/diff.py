@@ -55,6 +55,7 @@ ELEMENTS_WITH_FIXED_KEYS = {
     'vxlan-tenant': [('vxlan-identifier',)],
     'network-instance': [('network-instance',)],
     'class-map': [('name',)],
+    'ingress-acl-set': [('acl-type',)],
 }
 
 # Data structure to pair an xml element and its hash.
