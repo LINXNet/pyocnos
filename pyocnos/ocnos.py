@@ -41,7 +41,7 @@ class OCNOS:
     """ Class to instantiate a OcNOS device """
 
     def __init__(self, hostname, username, password, timeout=60, port=830):
-        # pylint: disable=too-many-arguments
+        # pylint: disable=too-many-arguments,too-many-positional-arguments
         """
         OCNOS device constructor.
         Args:

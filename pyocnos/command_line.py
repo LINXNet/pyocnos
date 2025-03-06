@@ -15,7 +15,7 @@ from pyocnos import LOGGER_NAME
 from pyocnos.ocnos import OCNOS
 
 
-# pylint: disable=too-many-locals,too-many-arguments
+# pylint: disable=too-many-locals,too-many-arguments,too-many-positional-arguments
 def process(config_file_path, hostname, actions, save_config_file_path, candidate_file_path, verbose=0):
     """
     Initialize device and call the actions passed in
