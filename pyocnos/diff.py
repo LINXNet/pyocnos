@@ -100,6 +100,8 @@ def sha(tree):
 
     Returns: None
     """
+    # ocnos will be retired from linx
+    # nosemgrep: sha224-hash
     return hashlib.sha224(etree.tostring(tree)).hexdigest()
 
 
