@@ -100,9 +100,7 @@ def sha(tree):
 
     Returns: None
     """
-    # ocnos will be retired from linx
-    # nosemgrep: sha224-hash
-    return hashlib.sha224(etree.tostring(tree)).hexdigest()
+    return hashlib.sha3_256(etree.tostring(tree)).hexdigest()
 
 
 def has_changed_children(element):
