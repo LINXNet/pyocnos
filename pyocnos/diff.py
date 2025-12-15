@@ -100,7 +100,7 @@ def sha(tree):
 
     Returns: None
     """
-    return hashlib.sha224(etree.tostring(tree)).hexdigest()
+    return hashlib.sha3_256(etree.tostring(tree)).hexdigest()
 
 
 def has_changed_children(element):
